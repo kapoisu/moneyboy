@@ -1,1 +1,1 @@
-target_sources(gameboy PRIVATE core.cpp decoder.hpp registers.cpp)
+target_sources(gameboy PRIVATE core.cpp decoder.hpp mmu.cpp registers.cpp)
