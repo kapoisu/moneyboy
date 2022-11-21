@@ -1,0 +1,1 @@
+target_sources(gameboy PRIVATE core.cpp decoder.hpp registers.hpp)

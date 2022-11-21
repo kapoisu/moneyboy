@@ -1,1 +1,2 @@
-add_executable(gameboy main.cpp cpu.cpp mmu.cpp)
+add_executable(gameboy main.cpp mmu.cpp)
+add_subdirectory(cpu)
