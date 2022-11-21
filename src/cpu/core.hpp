@@ -2,6 +2,7 @@
 #define CPU_CORE_H
 
 #include "decoder.hpp"
+#include "mmu.hpp"
 #include "registers.hpp"
 
 namespace gameboy::cpu {
@@ -15,6 +16,7 @@ namespace gameboy::cpu {
 
         Decoder decoder{};
         Instruction instruction{};
+        Mmu mmu{ "res/DMG_boot" };
         Registers regs{};
     };
 }

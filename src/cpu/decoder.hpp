@@ -5,12 +5,11 @@
 #include <functional>
 #include <string>
 #include <unordered_map>
+#include "registers.hpp"
+#include "mmu.hpp"
 
 namespace gameboy::cpu {
     struct Instruction {
-        struct Registers;
-        class Mmu;
-
         int opcode{ 0x00 };
         std::string name{ "NOP" };
         int cycle{ 1 }; // m-cycle
