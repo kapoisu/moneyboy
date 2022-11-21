@@ -29,6 +29,11 @@ namespace gameboy::cpu {
         std::uint16_t value;
     };
 
+    inline std::pair<std::uint8_t, std::uint8_t> split(const PairedRegister& reg)
+    {
+        return { reg.get_high(), reg.get_low() };
+    }
+
     struct Registers {
         std::uint8_t a;
         std::uint8_t f;

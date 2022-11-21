@@ -69,9 +69,7 @@ namespace gameboy::cpu {
                     [](Registers& regs, Mmu& mmu) {
                         regs.a = mmu.read_byte(make_address(regs.h, regs.l));
                         PairedRegister hl{ regs.h, regs.l };
-                        --hl;
-                        regs.h = hl.get_high();
-                        regs.l = hl.get_low();
+                        std::tie(regs.h, regs.l) = split(--hl);
                     },
                     [](Registers& regs, Mmu& mmu) { }
                 }
