@@ -7,8 +7,7 @@ namespace gameboy::cpu {
     {
         static int m_cycle{0};
 
-        instruction.steps[m_cycle](regs, mmu);
-        ++m_cycle;
+        instruction.execute(m_cycle++, regs, mmu);
 
         if (m_cycle == instruction.cycle) {
             auto opcode{mmu.read_byte(regs.program_counter++)};

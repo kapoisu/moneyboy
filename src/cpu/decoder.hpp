@@ -3,17 +3,19 @@
 
 #include <array>
 #include <functional>
+#include <iostream>
 #include <string>
 #include <unordered_map>
+#include <vector>
 #include "registers.hpp"
 #include "mmu.hpp"
 
 namespace gameboy::cpu {
     struct Instruction {
-        int opcode{ 0x00 };
-        std::string name{ "NOP" };
-        int cycle{ 1 }; // m-cycle
-        std::array<std::function<void(Registers&, Mmu&)>, 4> steps{ [](Registers& regs, Mmu&) {} };
+        int opcode{0x00};
+        std::string name{"NOP"};
+        int cycle{1}; // m-cycle
+        std::function<void(int cycle, Registers&, Mmu&)> execute{[](int cycle, Registers& regs, Mmu&) {}};
     };
 
     class Decoder {
