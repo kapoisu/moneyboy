@@ -10,29 +10,45 @@ namespace gameboy::cpu {
 
         void adjust_flag_z0h_(Registers& regs, bool condition_z, bool condition_h)
         {
-            condition_z ? regs.set_flag(Flag::zero) : regs.reset_flag(Flag::zero);
-            regs.reset_flag(Flag::negative);
-            condition_h ? regs.set_flag(Flag::half_carry) : regs.reset_flag(Flag::half_carry);
+            condition_z ? regs.f.set(Flag::zero) : regs.f.reset(Flag::zero);
+            regs.f.reset(Flag::negative);
+            condition_h ? regs.f.set(Flag::half_carry) : regs.f.reset(Flag::half_carry);
+        }
+
+        void adjust_flag_z0hc(Registers& regs, bool condition_z, bool condition_h, bool condition_c)
+        {
+            condition_z ? regs.f.set(Flag::zero) : regs.f.reset(Flag::zero);
+            regs.f.reset(Flag::negative);
+            condition_h ? regs.f.set(Flag::half_carry) : regs.f.reset(Flag::half_carry);
+            condition_c ? regs.f.set(Flag::carry) : regs.f.reset(Flag::carry);
         }
 
         void adjust_flag_z1h_(Registers& regs, bool condition_z, bool condition_h)
         {
-            condition_z ? regs.set_flag(Flag::zero) : regs.reset_flag(Flag::zero);
-            regs.set_flag(Flag::negative);
-            condition_h ? regs.set_flag(Flag::half_carry) : regs.reset_flag(Flag::half_carry);
+            condition_z ? regs.f.set(Flag::zero) : regs.f.reset(Flag::zero);
+            regs.f.set(Flag::negative);
+            condition_h ? regs.f.set(Flag::half_carry) : regs.f.reset(Flag::half_carry);
+        }
+
+        void adjust_flag_z1hc(Registers& regs, bool condition_z, bool condition_h, bool condition_c)
+        {
+            condition_z ? regs.f.set(Flag::zero) : regs.f.reset(Flag::zero);
+            regs.f.set(Flag::negative);
+            condition_h ? regs.f.set(Flag::half_carry) : regs.f.reset(Flag::half_carry);
+            condition_c ? regs.f.set(Flag::carry) : regs.f.reset(Flag::carry);
         }
 
         void adjust_flag__0hc(Registers& regs, bool condition_h, bool condition_c)
         {
-            regs.reset_flag(Flag::negative);
-            condition_h ? regs.set_flag(Flag::half_carry) : regs.reset_flag(Flag::half_carry);
-            condition_c ? regs.set_flag(Flag::carry) : regs.reset_flag(Flag::carry);
+            regs.f.reset(Flag::negative);
+            condition_h ? regs.f.set(Flag::half_carry) : regs.f.reset(Flag::half_carry);
+            condition_c ? regs.f.set(Flag::carry) : regs.f.reset(Flag::carry);
         }
 
         void adjust_flag_z000(Registers& regs, bool condition_z)
         {
-            condition_z ? regs.set_flag(Flag::zero) : regs.reset_flag(Flag::zero);
-            regs.reset_flag(Flag::negative | Flag::half_carry | Flag::carry);
+            condition_z ? regs.f.set(Flag::zero) : regs.f.reset(Flag::zero);
+            regs.f.reset(Flag::negative | Flag::half_carry | Flag::carry);
         }
     }
 
@@ -59,7 +75,7 @@ namespace gameboy::cpu {
         {0x02, {.opcode = 0x02, .name = "LD (BC), A", .cycle = 2, .execute = [](int cycle, Registers& regs, Mmu& mmu) {
             switch (cycle) {
                 case 0:
-                    mmu.write_byte(regs.bc, regs.af.get_high());
+                    mmu.write_byte(regs.bc, regs.a);
                     return;
                 default:
                     return;
@@ -149,7 +165,7 @@ namespace gameboy::cpu {
         }}},
         {0x12, {.opcode = 0x12, .name = "LD (DE), A", .cycle = 2, .execute = [](int cycle, Registers& regs, Mmu& mmu) {
             switch (cycle) {
-                case 0: mmu.write_byte(regs.de, regs.af.get_high());
+                case 0: mmu.write_byte(regs.de, regs.a);
                     return;
                 default:
                     return;
@@ -220,7 +236,7 @@ namespace gameboy::cpu {
         {0x22, {.opcode = 0x22, .name = "LD (HL+), A", .cycle = 2, .execute = [](int cycle, Registers& regs, Mmu& mmu) {
             switch (cycle) {
                 case 0:
-                    mmu.write_byte(regs.hl++, regs.af.get_high());
+                    mmu.write_byte(regs.hl++, regs.a);
                     return;
                 default:
                     return;
@@ -291,7 +307,7 @@ namespace gameboy::cpu {
         {0x32, {.opcode = 0x32, .name = "LD (HL-), A", .cycle = 2, .execute = [](int cycle, Registers& regs, Mmu& mmu) {
             switch (cycle) {
                 case 0:
-                    mmu.write_byte(regs.hl--, regs.af.get_high());
+                    mmu.write_byte(regs.hl--, regs.a);
                     return;
                 default:
                     return;
@@ -360,42 +376,42 @@ namespace gameboy::cpu {
             }
         }}},
         {0x3C, {.opcode = 0x3C, .name = "INC A", .cycle = 1, .execute = [](int cycle, Registers& regs, Mmu& mmu) {
-            AluResult result{add(regs.af.get_high(), std::uint8_t{1})};
-            regs.af.set_high(result.output);
+            AluResult result{add(regs.a, std::uint8_t{1})};
+            regs.a = result.output;
             adjust_flag_z0h_(regs, result.output == 0, result.half_carry);
         }}},
         {0x3D, {.opcode = 0x3D, .name = "DEC A", .cycle = 1, .execute = [](int cycle, Registers& regs, Mmu& mmu) {
-            AluResult result{sub(regs.af.get_high(), std::uint8_t{1})};
-            regs.af.set_high(result.output);
+            AluResult result{sub(regs.a, std::uint8_t{1})};
+            regs.a = result.output;
             adjust_flag_z1h_(regs, result.output == 0, result.half_carry);
         }}},
         {0xA8, {.opcode = 0xA8, .name = "XOR A, B", .cycle = 1, .execute = [](int cycle, Registers& regs, Mmu& mmu) {
-            regs.af.set_high(regs.af.get_high() ^ regs.bc.get_high());
-            adjust_flag_z000(regs, regs.af.get_high() == 0);
+            regs.a = regs.a ^ regs.bc.get_high();
+            adjust_flag_z000(regs, regs.a == 0);
         }}},
         {0xA9, {.opcode = 0xA9, .name = "XOR A, C", .cycle = 1, .execute = [](int cycle, Registers& regs, Mmu& mmu) {
-            regs.af.set_high(regs.af.get_high() ^ regs.bc.get_low());
-            adjust_flag_z000(regs, regs.af.get_high() == 0);
+            regs.a = regs.a ^ regs.bc.get_low();
+            adjust_flag_z000(regs, regs.a == 0);
         }}},
         {0xAA, {.opcode = 0xAA, .name = "XOR A, D", .cycle = 1, .execute = [](int cycle, Registers& regs, Mmu& mmu) {
-            regs.af.set_high(regs.af.get_high() ^ regs.de.get_high());
-            adjust_flag_z000(regs, regs.af.get_high() == 0);
+            regs.a = regs.a ^ regs.de.get_high();
+            adjust_flag_z000(regs, regs.a == 0);
         }}},
         {0xAB, {.opcode = 0xAB, .name = "XOR A, E", .cycle = 1, .execute = [](int cycle, Registers& regs, Mmu& mmu) {
-            regs.af.set_high(regs.af.get_high() ^ regs.de.get_low());
-            adjust_flag_z000(regs, regs.af.get_high() == 0);
+            regs.a = regs.a ^ regs.de.get_low();
+            adjust_flag_z000(regs, regs.a == 0);
         }}},
         {0xAC, {.opcode = 0xAC, .name = "XOR A, H", .cycle = 1, .execute = [](int cycle, Registers& regs, Mmu& mmu) {
-            regs.af.set_high(regs.af.get_high() ^ regs.hl.get_high());
-            adjust_flag_z000(regs, regs.af.get_high() == 0);
+            regs.a = regs.a ^ regs.hl.get_high();
+            adjust_flag_z000(regs, regs.a == 0);
         }}},
         {0xAD, {.opcode = 0xAD, .name = "XOR A, L", .cycle = 1, .execute = [](int cycle, Registers& regs, Mmu& mmu) {
-            regs.af.set_high(regs.af.get_high() ^ regs.hl.get_low());
-            adjust_flag_z000(regs, regs.af.get_high() == 0);
+            regs.a = regs.a ^ regs.hl.get_low();
+            adjust_flag_z000(regs, regs.a == 0);
         }}},
         {0xAF, {.opcode = 0xAF, .name = "XOR A, A", .cycle = 1, .execute = [](int cycle, Registers& regs, Mmu& mmu) {
-            regs.af.set_high(regs.af.get_high() ^ regs.af.get_high());
-            adjust_flag_z000(regs, regs.af.get_high() == 0);
+            regs.a = regs.a ^ regs.a;
+            adjust_flag_z000(regs, regs.a == 0);
         }}},
     };
 }

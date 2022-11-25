@@ -18,6 +18,15 @@ namespace gameboy::cpu {
         return static_cast<Flag>(std::underlying_type_t<Flag>(a) | std::underlying_type_t<Flag>(b));
     }
 
+    class FlagRegister {
+    public:
+        void set(Flag flag);
+        void reset(Flag flag);
+        bool operator[](Flag flag) const;
+    private:
+        std::uint8_t value;
+    };
+
     class PairedRegister {
     public:
         std::uint8_t get_high() const;
@@ -42,12 +51,10 @@ namespace gameboy::cpu {
         return {reg.get_high(), reg.get_low()};
     }
 
-    class Registers {
+    struct Registers {
     public:
-        void set_flag(Flag value);
-        void reset_flag(Flag value);
-
-        PairedRegister af;
+        FlagRegister f;
+        std::uint8_t a;
         PairedRegister bc;
         PairedRegister de;
         PairedRegister hl;

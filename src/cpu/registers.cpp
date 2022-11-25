@@ -1,18 +1,33 @@
 #include "registers.hpp"
+#include <bitset>
+#include <stdexcept>
 
 namespace gameboy::cpu {
-    void Registers::set_flag(Flag value)
+    void FlagRegister::set(Flag flag)
     {
-        auto f{af.get_low()};
-        f |= std::underlying_type_t<Flag>(value);
-        af.set_low(f);
+        value |= std::underlying_type_t<Flag>(flag);
     }
 
-    void Registers::reset_flag(Flag value)
+    void FlagRegister::reset(Flag flag)
     {
-        auto f{af.get_low()};
-        f &= ~std::underlying_type_t<Flag>(value);
-        af.set_low(f);
+        value &= ~std::underlying_type_t<Flag>(flag);
+    }
+
+    bool FlagRegister::operator[](Flag flag) const
+    {
+        std::bitset<8> layout{value};
+        switch (flag) {
+            case Flag::zero:
+                return layout[7];
+            case Flag::negative:
+                return layout[6];
+            case Flag::half_carry:
+                return layout[5];
+            case Flag::carry:
+                return layout[4];
+            default:
+                throw std::invalid_argument{"Invalid Flag Type."};
+        }
     }
 
     std::uint8_t PairedRegister::get_high() const
