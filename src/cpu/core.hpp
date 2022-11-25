@@ -9,14 +9,13 @@ namespace gameboy::cpu {
     class Core {
     public:
         void tick();
-
-        static constexpr double frequency{ 1.048576e6 };
-    private:
         void test();
 
+        static constexpr double frequency{1.048576e6};
+    private:
         Decoder decoder{};
         Instruction instruction{};
-        Mmu mmu{ "res/DMG_boot" };
+        Mmu mmu{"res/DMG_boot"};
         Registers regs{};
     };
 }
