@@ -20,4 +20,9 @@ namespace gameboy {
     {
         ram[address] = value;
     }
+
+    int make_address(std::uint8_t high, std::int8_t low)
+    {
+        return (high << 8) | low;
+    }
 }

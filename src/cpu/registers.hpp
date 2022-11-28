@@ -2,7 +2,7 @@
 #define CPU_REGISTERS_H
 
 #include <cstdint>
-#include <type_traits>
+#include <optional>
 #include <utility>
 
 namespace gameboy::cpu {
@@ -58,9 +58,18 @@ namespace gameboy::cpu {
         PairedRegister bc;
         PairedRegister de;
         PairedRegister hl;
-        PairedRegister stack_pointer;
+        PairedRegister sp; // stack pointer
         std::uint16_t program_counter;
     };
+
+    struct FlagAdjustment {
+        std::optional<bool> condition_z;
+        std::optional<bool> condition_n;
+        std::optional<bool> condition_h;
+        std::optional<bool> condition_c;
+    };
+
+    void adjust_flag(FlagRegister& flag, FlagAdjustment adjust);
 }
 
 #endif

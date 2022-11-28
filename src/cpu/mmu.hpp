@@ -1,4 +1,3 @@
-
 #ifndef MMU_H
 #define MMU_H
 
@@ -18,6 +17,8 @@ namespace gameboy {
         std::vector<std::uint8_t> boot_rom{};
         std::array<std::uint8_t, 10000> ram{};
     };
+
+    int make_address(std::uint8_t high, std::int8_t low);
 }
 
 #endif

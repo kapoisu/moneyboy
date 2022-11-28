@@ -86,4 +86,23 @@ namespace gameboy::cpu {
     {
         return value;
     }
+
+    void adjust_flag(FlagRegister& flag, FlagAdjustment adjust)
+    {
+        if (adjust.condition_z.has_value()) {
+            adjust.condition_z.value() ? flag.set(Flag::zero) : flag.reset(Flag::zero);
+        }
+
+        if (adjust.condition_n.has_value()) {
+            adjust.condition_n.value() ? flag.set(Flag::negative) : flag.reset(Flag::negative);
+        }
+
+        if (adjust.condition_h.has_value()) {
+            adjust.condition_h.value() ? flag.set(Flag::half_carry) : flag.reset(Flag::half_carry);
+        }
+
+        if (adjust.condition_c.has_value()) {
+            adjust.condition_c.value() ? flag.set(Flag::carry) : flag.reset(Flag::carry);
+        }
+    }
 }
