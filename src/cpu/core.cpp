@@ -907,6 +907,46 @@ namespace gameboy::cpu {
                     .opcode{opcode}, .name{"CP A, A"}, .cycle{1},
                     .execute{Cp<reg8, reg8>{}}
                 };
+            case 0xC6:
+                return {
+                    .opcode{opcode}, .name{"ADD A, u8"}, .cycle{2},
+                    .execute{Add<reg8, memory>{}}
+                };
+            case 0xCE:
+                return {
+                    .opcode{opcode}, .name{"ADC A, u8"}, .cycle{2},
+                    .execute{Adc<reg8, memory>{}}
+                };
+            case 0xD6:
+                return {
+                    .opcode{opcode}, .name{"SUB A, u8"}, .cycle{2},
+                    .execute{Sub<reg8, memory>{}}
+                };
+            case 0xDE:
+                return {
+                    .opcode{opcode}, .name{"SBC A, u8"}, .cycle{2},
+                    .execute{Sbc<reg8, memory>{}}
+                };
+            case 0xE6:
+                return {
+                    .opcode{opcode}, .name{"AND A, u8"}, .cycle{2},
+                    .execute{And<reg8, memory>{}}
+                };
+            case 0xEE:
+                return {
+                    .opcode{opcode}, .name{"XOR A, u8"}, .cycle{2},
+                    .execute{Xor<reg8, memory>{}}
+                };
+            case 0xF6:
+                return {
+                    .opcode{opcode}, .name{"OR A, u8"}, .cycle{2},
+                    .execute{Or<reg8, memory>{}}
+                };
+            case 0xFE:
+                return {
+                    .opcode{opcode}, .name{"CP A, u8"}, .cycle{2},
+                    .execute{Cp<reg8, memory>{}}
+                };
         }
     }
 }

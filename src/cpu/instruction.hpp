@@ -3,8 +3,9 @@
 
 #include <functional>
 #include <string>
-#include <variant>
-#include "arithmatic.hpp"
+#include "arithmetic.hpp"
+#include "mmu.hpp"
+#include "registers.hpp"
 
 namespace gameboy::cpu {
     struct Instruction {
@@ -562,6 +563,24 @@ namespace gameboy::cpu {
         }
     };
 
+    // ADD A, u8
+    template<>
+    struct Add<Operand::reg8, Operand::memory> {
+        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            switch (cycle) {
+                case 0: {
+                        AluResult result{add(regs.a, mmu.read_byte(regs.program_counter++))};
+                        regs.a = result.output;
+                        adjust_flag(regs.f, {result.output == 0, false, result.half_carry, result.carry});
+                    };
+                    return;
+                default:
+                    return;
+            }
+        }
+    };
+
     // ADD rr, rr
     template<>
     struct Add<Operand::reg16, Operand::reg16> {
@@ -635,6 +654,24 @@ namespace gameboy::cpu {
         }
     };
 
+    // ADC A, u8
+    template<>
+    struct Adc<Operand::reg8, Operand::memory> {
+        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            switch (cycle) {
+                case 0: {
+                        AluResult result{add(regs.a, mmu.read_byte(regs.program_counter++), regs.f[Flag::carry])};
+                        regs.a = result.output;
+                        adjust_flag(regs.f, {result.output == 0, false, result.half_carry, result.carry});
+                    };
+                    return;
+                default:
+                    return;
+            }
+        }
+    };
+
     // SUB
     template<Operand Op1, Operand Op2> struct Sub;
 
@@ -683,6 +720,24 @@ namespace gameboy::cpu {
             AluResult result{sub(regs.a, regs.a)};
             regs.a = result.output;
             adjust_flag(regs.f, {result.output == 0, true, result.half_carry, result.carry});
+        }
+    };
+
+    // SUB A, u8
+    template<>
+    struct Sub<Operand::reg8, Operand::memory> {
+        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            switch (cycle) {
+                case 0: {
+                        AluResult result{sub(regs.a, mmu.read_byte(regs.program_counter++))};
+                        regs.a = result.output;
+                        adjust_flag(regs.f, {result.output == 0, true, result.half_carry, result.carry});
+                    };
+                    return;
+                default:
+                    return;
+            }
         }
     };
 
@@ -737,6 +792,24 @@ namespace gameboy::cpu {
         }
     };
 
+    // SBC A, u8
+    template<>
+    struct Sbc<Operand::reg8, Operand::memory> {
+        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            switch (cycle) {
+                case 0: {
+                        AluResult result{sub(regs.a, mmu.read_byte(regs.program_counter++), regs.f[Flag::carry])};
+                        regs.a = result.output;
+                        adjust_flag(regs.f, {result.output == 0, true, result.half_carry, result.carry});
+                    };
+                    return;
+                default:
+                    return;
+            }
+        }
+    };
+
     // AND
     template<Operand Op1, Operand Op2> struct And;
 
@@ -781,6 +854,22 @@ namespace gameboy::cpu {
         {
             regs.a &= regs.a;
             adjust_flag(regs.f, {regs.a == 0, false, true, false});
+        }
+    };
+
+    // AND A, u8
+    template<>
+    struct And<Operand::reg8, Operand::memory> {
+        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            switch (cycle) {
+                case 0:
+                    regs.a &= mmu.read_byte(regs.program_counter++);
+                    adjust_flag(regs.f, {regs.a == 0, false, true, false});
+                    return;
+                default:
+                    return;
+            }
         }
     };
 
@@ -831,6 +920,22 @@ namespace gameboy::cpu {
         }
     };
 
+    // XOR A, u8
+    template<>
+    struct Xor<Operand::reg8, Operand::memory> {
+        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            switch (cycle) {
+                case 0:
+                    regs.a ^= mmu.read_byte(regs.program_counter++);
+                    adjust_flag(regs.f, {regs.a == 0, false, false, false});
+                    return;
+                default:
+                    return;
+            }
+        }
+    };
+
     // OR
     template<Operand Op1, Operand Op2> struct Or;
 
@@ -875,6 +980,22 @@ namespace gameboy::cpu {
         {
             regs.a |= regs.a;
             adjust_flag(regs.f, {regs.a == 0, false, false, false});
+        }
+    };
+
+    // OR A, u8
+    template<>
+    struct Or<Operand::reg8, Operand::memory> {
+        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            switch (cycle) {
+                case 0:
+                    regs.a |= mmu.read_byte(regs.program_counter++);
+                    adjust_flag(regs.f, {regs.a == 0, false, false, false});
+                    return;
+                default:
+                    return;
+            }
         }
     };
 
@@ -923,6 +1044,31 @@ namespace gameboy::cpu {
         {
             AluResult result{sub(regs.a, regs.a)};
             adjust_flag(regs.f, {result.output == 0, true, result.half_carry, result.carry});
+        }
+    };
+
+    // CP A, u8
+    template<>
+    struct Cp<Operand::reg8, Operand::memory> {
+        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            switch (cycle) {
+                case 0: {
+                        AluResult result{sub(regs.a, mmu.read_byte(regs.program_counter++))};
+                        adjust_flag(regs.f, {result.output == 0, true, result.half_carry, result.carry});
+                    }
+                    return;
+                default:
+                    return;
+            }
+        }
+    };
+
+    struct Rlca {
+        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            AluResult result{rlc(regs.a)};
+            adjust_flag(regs.f, {false, false, false, result.carry});
         }
     };
 }

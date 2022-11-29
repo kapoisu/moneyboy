@@ -1,6 +1,9 @@
 #ifndef CPU_ARITHMATIC_H
 #define CPU_ARITHMATIC_H
 
+#include <concepts>
+#include <type_traits>
+
 namespace gameboy::cpu {
     template<typename T>
     struct AluResult {
@@ -29,6 +32,16 @@ namespace gameboy::cpu {
         AluResult<T> result{.output = static_cast<T>(a - b)};
         result.half_carry = (a & half_mask) - (b & half_mask) - carry < 0;
         result.carry = (a & full_mask) - (b & full_mask) - carry < 0;
+
+        return result;
+    }
+
+    template<typename T>
+    AluResult<T> rlc(T a) requires std::integral<T>
+    {
+        const auto msb{a >> (sizeof(T) * 8 - 1)};
+        AluResult<T> result{.output = static_cast<T>((a << 1) | msb)};
+        result.carry = (msb != 0);
 
         return result;
     }
