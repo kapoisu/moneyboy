@@ -30,7 +30,7 @@ namespace gameboy::cpu {
             case 0x01:
                 return {
                     .opcode{opcode}, .name{"LD BC, u16"}, .cycle{3},
-                    .execute{Ld<reg16, memory>{std::ref(regs.bc)}}
+                    .execute{Ld<reg16, u16>{std::ref(regs.bc)}}
                 };
             case 0x02:
                 return {
@@ -55,12 +55,17 @@ namespace gameboy::cpu {
             case 0x06:
                 return {
                     .opcode{opcode}, .name{"LD B, u8"}, .cycle{2},
-                    .execute{Ld<reg16_half, memory>{Reg16High{std::ref(regs.bc)}}}
+                    .execute{Ld<reg16_half, u8>{Reg16High{std::ref(regs.bc)}}}
+                };
+            case 0x07:
+                return {
+                    .opcode{opcode}, .name{"RLCA"}, .cycle{1},
+                    .execute{Rrca{}}
                 };
             case 0x08:
                 return {
                     .opcode{opcode}, .name{"LD (u16), SP"}, .cycle{5},
-                    .execute{Ld<memory, reg16>{std::ref(regs.sp)}}
+                    .execute{Ld<u16_address, reg16>{std::ref(regs.sp)}}
                 };
             case 0x09:
                 return {
@@ -90,12 +95,17 @@ namespace gameboy::cpu {
             case 0x0E:
                 return {
                     .opcode{opcode}, .name{"LD C, u8"}, .cycle{2},
-                    .execute{Ld<reg16_half, memory>{Reg16Low{std::ref(regs.bc)}}}
+                    .execute{Ld<reg16_half, u8>{Reg16Low{std::ref(regs.bc)}}}
+                };
+            case 0x0F:
+                return {
+                    .opcode{opcode}, .name{"RRCA"}, .cycle{1},
+                    .execute{Rrca{}}
                 };
             case 0x11:
                 return {
                     .opcode{opcode}, .name{"LD DE, u16"}, .cycle{3},
-                    .execute{Ld<reg16, memory>{std::ref(regs.de)}}
+                    .execute{Ld<reg16, u16>{std::ref(regs.de)}}
                 };
             case 0x12:
                 return {
@@ -120,7 +130,12 @@ namespace gameboy::cpu {
             case 0x16:
                 return {
                     .opcode{opcode}, .name{"LD D, u8"}, .cycle{2},
-                    .execute{Ld<reg16_half, memory>{Reg16High{std::ref(regs.de)}}}
+                    .execute{Ld<reg16_half, u8>{Reg16High{std::ref(regs.de)}}}
+                };
+            case 0x17:
+                return {
+                    .opcode{opcode}, .name{"RLA"}, .cycle{1},
+                    .execute{Rla{}}
                 };
             case 0x19:
                 return {
@@ -150,12 +165,17 @@ namespace gameboy::cpu {
             case 0x1E:
                 return {
                     .opcode{opcode}, .name{"LD E, u8"}, .cycle{2},
-                    .execute{Ld<reg16_half, memory>{Reg16Low{std::ref(regs.de)}}}
+                    .execute{Ld<reg16_half, u8>{Reg16Low{std::ref(regs.de)}}}
+                };
+            case 0x1F:
+                return {
+                    .opcode{opcode}, .name{"RRA"}, .cycle{1},
+                    .execute{Rra{}}
                 };
             case 0x21:
                 return {
                     .opcode{opcode}, .name{"LD HL, u16"}, .cycle{3},
-                    .execute{Ld<reg16, memory>{std::ref(regs.hl)}}
+                    .execute{Ld<reg16, u16>{std::ref(regs.hl)}}
                 };
             case 0x22:
                 return {
@@ -180,7 +200,7 @@ namespace gameboy::cpu {
             case 0x26:
                 return {
                     .opcode{opcode}, .name{"LD H, u8"}, .cycle{2},
-                    .execute{Ld<reg16_half, memory>{Reg16High{std::ref(regs.hl)}}}
+                    .execute{Ld<reg16_half, u8>{Reg16High{std::ref(regs.hl)}}}
                 };
             case 0x29:
                 return {
@@ -210,12 +230,12 @@ namespace gameboy::cpu {
             case 0x2E:
                 return {
                     .opcode{opcode}, .name{"LD L, u8"}, .cycle{2},
-                    .execute{Ld<reg16_half, memory>{Reg16Low{std::ref(regs.hl)}}}
+                    .execute{Ld<reg16_half, u8>{Reg16Low{std::ref(regs.hl)}}}
                 };
             case 0x31:
                 return {
                     .opcode{opcode}, .name{"LD SP, u16"}, .cycle{3},
-                    .execute{Ld<reg16, memory>{std::ref(regs.sp)}}
+                    .execute{Ld<reg16, u16>{std::ref(regs.sp)}}
                 };
             case 0x32:
                 return {
@@ -240,7 +260,7 @@ namespace gameboy::cpu {
             case 0x36:
                 return {
                     .opcode{opcode}, .name{"LD (HL), u8"}, .cycle{3},
-                    .execute{Ld<reg16_address, memory>{std::ref(regs.hl)}}
+                    .execute{Ld<reg16_address, u8>{std::ref(regs.hl)}}
                 };
             case 0x39:
                 return {
@@ -270,7 +290,7 @@ namespace gameboy::cpu {
             case 0x3E:
                 return {
                     .opcode{opcode}, .name{"LD A, u8"}, .cycle{2},
-                    .execute{Ld<reg8, memory>{}}
+                    .execute{Ld<reg8, u8>{}}
                 };
             case 0x40:
                 return {
@@ -910,42 +930,87 @@ namespace gameboy::cpu {
             case 0xC6:
                 return {
                     .opcode{opcode}, .name{"ADD A, u8"}, .cycle{2},
-                    .execute{Add<reg8, memory>{}}
+                    .execute{Add<reg8, u8>{}}
                 };
             case 0xCE:
                 return {
                     .opcode{opcode}, .name{"ADC A, u8"}, .cycle{2},
-                    .execute{Adc<reg8, memory>{}}
+                    .execute{Adc<reg8, u8>{}}
                 };
             case 0xD6:
                 return {
                     .opcode{opcode}, .name{"SUB A, u8"}, .cycle{2},
-                    .execute{Sub<reg8, memory>{}}
+                    .execute{Sub<reg8, u8>{}}
                 };
             case 0xDE:
                 return {
                     .opcode{opcode}, .name{"SBC A, u8"}, .cycle{2},
-                    .execute{Sbc<reg8, memory>{}}
+                    .execute{Sbc<reg8, u8>{}}
+                };
+            case 0xE0:
+                return {
+                    .opcode{opcode}, .name{"LD (FF00 + u8), A"}, .cycle{3},
+                    .execute{Ld<u8_address, reg8>{}}
+                };
+            case 0xE2:
+                return {
+                    .opcode{opcode}, .name{"LD (FF00 + C), A"}, .cycle{2},
+                    .execute{Ld<reg8_address, reg8>{Reg16Low{std::ref(regs.bc)}}}
                 };
             case 0xE6:
                 return {
                     .opcode{opcode}, .name{"AND A, u8"}, .cycle{2},
-                    .execute{And<reg8, memory>{}}
+                    .execute{And<reg8, u8>{}}
+                };
+            case 0xE8:
+                return {
+                    .opcode{opcode}, .name{"ADD SP, i8"}, .cycle{4},
+                    .execute{Add<reg16, i8>{std::ref(regs.sp)}}
+                };
+            case 0xEA:
+                return {
+                    .opcode{opcode}, .name{"LD (u16), A"}, .cycle{4},
+                    .execute{Ld<u16_address, reg8>{}}
                 };
             case 0xEE:
                 return {
                     .opcode{opcode}, .name{"XOR A, u8"}, .cycle{2},
-                    .execute{Xor<reg8, memory>{}}
+                    .execute{Xor<reg8, u8>{}}
+                };
+            case 0xF0:
+                return {
+                    .opcode{opcode}, .name{"LD A, (FF00 + u8)"}, .cycle{3},
+                    .execute{Ld<reg8, u8_address>{}}
+                };
+            case 0xF2:
+                return {
+                    .opcode{opcode}, .name{"LD A, (FF00 + C)"}, .cycle{2},
+                    .execute{Ld<reg8, reg8_address>{Reg16Low{std::ref(regs.bc)}}}
                 };
             case 0xF6:
                 return {
                     .opcode{opcode}, .name{"OR A, u8"}, .cycle{2},
-                    .execute{Or<reg8, memory>{}}
+                    .execute{Or<reg8, u8>{}}
+                };
+            case 0xF8:
+                return {
+                    .opcode{opcode}, .name{"LD HL, SP + i8"}, .cycle{3},
+                    .execute{Ld<reg16, reg16_offset>{std::ref(regs.hl), std::ref(regs.sp)}}
+                };
+            case 0xF9:
+                return {
+                    .opcode{opcode}, .name{"LD SP, HL"}, .cycle{2},
+                    .execute{Ld<reg16, reg16>{regs.sp, regs.hl}}
+                };
+            case 0xFA:
+                return {
+                    .opcode{opcode}, .name{"LD A, (u16)"}, .cycle{4},
+                    .execute{Ld<reg8, u16_address>{}}
                 };
             case 0xFE:
                 return {
                     .opcode{opcode}, .name{"CP A, u8"}, .cycle{2},
-                    .execute{Cp<reg8, memory>{}}
+                    .execute{Cp<reg8, u8>{}}
                 };
         }
     }
