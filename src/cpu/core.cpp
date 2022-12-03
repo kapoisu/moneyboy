@@ -18,6 +18,9 @@ namespace gameboy::cpu {
 
     Instruction Core::decode(int opcode)
     {
+        static constexpr auto with_flag{true};
+        static constexpr auto without_flag{false};
+
         switch (opcode) {
             using enum Operand;
             default:
@@ -927,6 +930,16 @@ namespace gameboy::cpu {
                     .opcode{opcode}, .name{"CP A, A"}, .cycle{1},
                     .execute{Cp<reg8, reg8>{Reg16High{std::ref(regs.af)}}}
                 };
+            case 0xC1:
+                return {
+                    .opcode{opcode}, .name{"POP BC"}, .cycle{3},
+                    .execute{Pop<without_flag>{std::ref(regs.bc)}}
+                };
+            case 0xC5:
+                return {
+                    .opcode{opcode}, .name{"PUSH BC"}, .cycle{4},
+                    .execute{Push<without_flag>{std::ref(regs.bc)}}
+                };
             case 0xC6:
                 return {
                     .opcode{opcode}, .name{"ADD A, u8"}, .cycle{2},
@@ -936,6 +949,16 @@ namespace gameboy::cpu {
                 return {
                     .opcode{opcode}, .name{"ADC A, u8"}, .cycle{2},
                     .execute{Adc<reg8, u8>{}}
+                };
+            case 0xD1:
+                return {
+                    .opcode{opcode}, .name{"POP DE"}, .cycle{3},
+                    .execute{Pop<without_flag>{std::ref(regs.de)}}
+                };
+            case 0xD5:
+                return {
+                    .opcode{opcode}, .name{"PUSH DE"}, .cycle{4},
+                    .execute{Push<without_flag>{std::ref(regs.de)}}
                 };
             case 0xD6:
                 return {
@@ -952,10 +975,20 @@ namespace gameboy::cpu {
                     .opcode{opcode}, .name{"LD (FF00 + u8), A"}, .cycle{3},
                     .execute{Ld<u8_address, reg8>{}}
                 };
+            case 0xE1:
+                return {
+                    .opcode{opcode}, .name{"POP HL"}, .cycle{3},
+                    .execute{Pop<without_flag>{std::ref(regs.hl)}}
+                };
             case 0xE2:
                 return {
                     .opcode{opcode}, .name{"LD (FF00 + C), A"}, .cycle{2},
                     .execute{Ld<reg8_address, reg8>{Reg16Low{std::ref(regs.bc)}}}
+                };
+            case 0xE5:
+                return {
+                    .opcode{opcode}, .name{"PUSH HL"}, .cycle{4},
+                    .execute{Push<without_flag>{std::ref(regs.hl)}}
                 };
             case 0xE6:
                 return {
@@ -982,10 +1015,20 @@ namespace gameboy::cpu {
                     .opcode{opcode}, .name{"LD A, (FF00 + u8)"}, .cycle{3},
                     .execute{Ld<reg8, u8_address>{}}
                 };
+            case 0xF1:
+                return {
+                    .opcode{opcode}, .name{"POP AF"}, .cycle{3},
+                    .execute{Pop<with_flag>{std::ref(regs.af)}}
+                };
             case 0xF2:
                 return {
                     .opcode{opcode}, .name{"LD A, (FF00 + C)"}, .cycle{2},
                     .execute{Ld<reg8, reg8_address>{Reg16Low{std::ref(regs.bc)}}}
+                };
+            case 0xF5:
+                return {
+                    .opcode{opcode}, .name{"PUSH AF"}, .cycle{4},
+                    .execute{Push<with_flag>{std::ref(regs.af)}}
                 };
             case 0xF6:
                 return {
