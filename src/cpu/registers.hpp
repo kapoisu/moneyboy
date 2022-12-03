@@ -3,7 +3,9 @@
 
 #include <cstdint>
 #include <optional>
+#include <type_traits>
 #include <utility>
+#include <variant>
 
 namespace gameboy::cpu {
     enum class Flag : std::uint8_t {
@@ -20,46 +22,14 @@ namespace gameboy::cpu {
 
     class FlagRegister {
     public:
-        void set(Flag flag);
-        void reset(Flag flag);
-        bool operator[](Flag flag) const;
+        FlagRegister() = default;
+        explicit FlagRegister(std::uint8_t data);
+        void set(Flag option);
+        void reset(Flag option);
+        bool operator[](Flag option) const;
+        std::uint8_t data() const;
     private:
         std::uint8_t value;
-    };
-
-    class PairedRegister {
-    public:
-        std::uint8_t get_high() const;
-        std::uint8_t get_low() const;
-        void set_high(std::uint8_t high);
-        void set_low(std::uint8_t low);
-        PairedRegister& operator=(std::uint16_t new_value);
-        PairedRegister& operator++();
-        PairedRegister& operator--();
-        PairedRegister operator++(int);
-        PairedRegister operator--(int);
-        operator std::uint16_t() const;
-
-        using High = std::uint8_t;
-        using Low = std::uint8_t;
-    private:
-        std::uint16_t value;
-    };
-
-    inline std::pair<PairedRegister::High, PairedRegister::Low> split(const PairedRegister& reg)
-    {
-        return {reg.get_high(), reg.get_low()};
-    }
-
-    struct Registers {
-    public:
-        FlagRegister f;
-        std::uint8_t a;
-        PairedRegister bc;
-        PairedRegister de;
-        PairedRegister hl;
-        PairedRegister sp; // stack pointer
-        std::uint16_t program_counter;
     };
 
     struct FlagAdjustment {
@@ -69,7 +39,47 @@ namespace gameboy::cpu {
         std::optional<bool> condition_c;
     };
 
-    void adjust_flag(FlagRegister& flag, FlagAdjustment adjust);
+    union Reg8Variant {
+        FlagRegister flag;
+        std::uint8_t number;
+    };
+
+    class PairedRegister {
+    public:
+        using High = std::uint8_t;
+        using Low = std::variant<std::uint8_t, FlagRegister>;
+
+        PairedRegister(High high, Low low);
+        template<typename T> requires std::is_same_v<T, std::uint8_t> || std::is_same_v<T, FlagRegister>
+        T get_low() const { return std::get<T>(reg8_low); }
+        std::uint8_t get_high() const { return reg8_high; }
+        void set_low(std::uint8_t value) { reg8_low = value; }
+        void set_low(FlagRegister value) { reg8_low = std::move(value); }
+        void set_high(std::uint8_t value) { reg8_high = value; }
+        PairedRegister& operator=(std::uint16_t value);
+        PairedRegister& operator++();
+        PairedRegister& operator--();
+        PairedRegister operator++(int);
+        PairedRegister operator--(int);
+        operator std::uint16_t() const;
+    private:
+        Low reg8_low;
+        High reg8_high;
+    };
+
+    struct Registers {
+    public:
+        bool operator[](Flag option) const;
+
+        PairedRegister af{std::uint8_t{}, FlagRegister{}};
+        PairedRegister bc{std::uint8_t{}, std::uint8_t{}};
+        PairedRegister de{std::uint8_t{}, std::uint8_t{}};
+        PairedRegister hl{std::uint8_t{}, std::uint8_t{}};
+        PairedRegister sp{std::uint8_t{}, std::uint8_t{}}; // stack pointer
+        std::uint16_t program_counter;
+    };
+
+    void adjust_flag(Registers& flag, FlagAdjustment adjust);
 }
 
 #endif

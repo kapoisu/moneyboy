@@ -3,20 +3,24 @@
 #include <stdexcept>
 
 namespace gameboy::cpu {
-    void FlagRegister::set(Flag flag)
+    FlagRegister::FlagRegister(std::uint8_t data) : value{data}
     {
-        value |= std::underlying_type_t<Flag>(flag);
     }
 
-    void FlagRegister::reset(Flag flag)
+    void FlagRegister::set(Flag option)
     {
-        value &= ~std::underlying_type_t<Flag>(flag);
+        value |= std::underlying_type_t<Flag>(option);
     }
 
-    bool FlagRegister::operator[](Flag flag) const
+    void FlagRegister::reset(Flag option)
+    {
+        value &= ~std::underlying_type_t<Flag>(option);
+    }
+
+    bool FlagRegister::operator[](Flag option) const
     {
         std::bitset<8> layout{value};
-        switch (flag) {
+        switch (option) {
             case Flag::zero:
                 return layout[7];
             case Flag::negative:
@@ -30,42 +34,32 @@ namespace gameboy::cpu {
         }
     }
 
-    std::uint8_t PairedRegister::get_high() const
+    std::uint8_t FlagRegister::data() const
     {
-        return static_cast<std::uint8_t>(value >> 8);
+        return value;
     }
 
-    std::uint8_t PairedRegister::get_low() const
+    PairedRegister::PairedRegister(High high, Low low) : reg8_low{low}, reg8_high{high}
     {
-        return static_cast<std::uint8_t>(value & 0x00FF);
     }
 
-    void PairedRegister::set_high(std::uint8_t high)
+    PairedRegister& PairedRegister::operator=(std::uint16_t value)
     {
-        value = (value & 0x00FF) | (high << 8);
-    }
-
-    void PairedRegister::set_low(std::uint8_t low)
-    {
-        value = (value & 0xFF00) | low;
-    }
-
-    PairedRegister& PairedRegister::operator=(std::uint16_t new_value)
-    {
-        value = new_value;
+        set_high(static_cast<std::uint8_t>(value >> 8));
+        set_low(static_cast<std::uint8_t>(value & 0x00FF));
         return *this;
     }
 
     PairedRegister& PairedRegister::operator++()
     {
-        ++value;
-        return *this;
+        std::uint16_t temp{*this};
+        return operator=(++temp);
     }
 
     PairedRegister& PairedRegister::operator--()
     {
-        --value;
-        return *this;
+        std::uint16_t temp{*this};
+        return operator=(--temp);
     }
 
     PairedRegister PairedRegister::operator++(int)
@@ -84,25 +78,34 @@ namespace gameboy::cpu {
 
     PairedRegister::operator std::uint16_t() const
     {
-        return value;
+        return (reg8_high << 8) | std::get<std::uint8_t>(reg8_low);
     }
 
-    void adjust_flag(FlagRegister& flag, FlagAdjustment adjust)
+    bool Registers::operator[](Flag option) const
     {
+        return af.get_low<FlagRegister>()[option];
+    }
+
+    void adjust_flag(Registers& regs, FlagAdjustment adjust)
+    {
+        auto temp{regs.af.get_low<FlagRegister>()};
+
         if (adjust.condition_z.has_value()) {
-            adjust.condition_z.value() ? flag.set(Flag::zero) : flag.reset(Flag::zero);
+            adjust.condition_z.value() ? temp.set(Flag::zero) : temp.reset(Flag::zero);
         }
 
         if (adjust.condition_n.has_value()) {
-            adjust.condition_n.value() ? flag.set(Flag::negative) : flag.reset(Flag::negative);
+            adjust.condition_n.value() ? temp.set(Flag::negative) : temp.reset(Flag::negative);
         }
 
         if (adjust.condition_h.has_value()) {
-            adjust.condition_h.value() ? flag.set(Flag::half_carry) : flag.reset(Flag::half_carry);
+            adjust.condition_h.value() ? temp.set(Flag::half_carry) : temp.reset(Flag::half_carry);
         }
 
         if (adjust.condition_c.has_value()) {
-            adjust.condition_c.value() ? flag.set(Flag::carry) : flag.reset(Flag::carry);
+            adjust.condition_c.value() ? temp.set(Flag::carry) : temp.reset(Flag::carry);
         }
+
+        regs.af.set_low(std::move(temp));
     }
 }
