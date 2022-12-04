@@ -28,6 +28,7 @@ namespace gameboy::cpu {
         u16_address
     };
 
+    using CycleRef = std::reference_wrapper<int>;
     using Reg16Ref = std::reference_wrapper<PairedRegister>;
     using Reg8Getter = std::uint8_t (Reg16Ref::type::*)() const;
     using Reg8Setter = void (Reg16Ref::type::*)(std::uint8_t);
@@ -42,6 +43,14 @@ namespace gameboy::cpu {
         Reg16Ref rr;
         Reg8Getter getter{Reg16Ref::type::get_low};
         Reg8Setter setter{Reg16Ref::type::set_low};
+    };
+
+    template<Flag Option, bool Status>
+    struct FlagPredicate {
+        bool operator()(Registers& regs)
+        {
+            return regs[Option] == Status;
+        }
     };
 
     // NOP
@@ -158,17 +167,16 @@ namespace gameboy::cpu {
     struct Ld<Operand::reg8, Operand::u16_address>{
         void operator()(int cycle, Registers& regs, Mmu& mmu)
         {
-            static std::uint8_t low{};
-            static std::uint8_t high{};
+            static PairedRegister address{{}, std::uint8_t{}};
             switch (cycle) {
                 case 0:
-                    low = mmu.read_byte(regs.program_counter++);
+                    address.set_low(mmu.read_byte(regs.program_counter++));
                     return;
                 case 1:
-                    high = mmu.read_byte(regs.program_counter++);
+                    address.set_high(mmu.read_byte(regs.program_counter++));
                     return;
                 case 2:
-                    regs.af.set_high(mmu.read_byte(make_address(high, low)));
+                    regs.af.set_high(mmu.read_byte(address));
                     return;
                 default:
                     return;
@@ -325,17 +333,16 @@ namespace gameboy::cpu {
     struct Ld<Operand::u16_address, Operand::reg8>{
         void operator()(int cycle, Registers& regs, Mmu& mmu)
         {
-            static std::uint8_t low{};
-            static std::uint8_t high{};
+            static PairedRegister address{{}, std::uint8_t{}};
             switch (cycle) {
                 case 0:
-                    low = mmu.read_byte(regs.program_counter++);
+                    address.set_low(mmu.read_byte(regs.program_counter++));
                     return;
                 case 1:
-                    high = mmu.read_byte(regs.program_counter++);
+                    address.set_high(mmu.read_byte(regs.program_counter++));
                     return;
                 case 2:
-                    mmu.write_byte(make_address(high, low), regs.af.get_high());
+                    mmu.write_byte(address, regs.af.get_high());
                     return;
                 default:
                     return;
@@ -349,20 +356,19 @@ namespace gameboy::cpu {
         Ld(Reg16Ref reg1) : rr{reg1} {}
         void operator()(int cycle, Registers& regs, Mmu& mmu)
         {
-            static std::uint8_t low{};
-            static std::uint8_t high{};
+            static PairedRegister address{{}, std::uint8_t{}};
             switch (cycle) {
                 case 0:
-                    low = mmu.read_byte(regs.program_counter++);
+                    address.set_low(mmu.read_byte(regs.program_counter++));
                     return;
                 case 1:
-                    high = mmu.read_byte(regs.program_counter++);
+                    address.set_high(mmu.read_byte(regs.program_counter++));
                     return;
                 case 2:
-                    mmu.write_byte(make_address(high, low), rr.get().get_low<std::uint8_t>());
+                    mmu.write_byte(address++, rr.get().get_low<std::uint8_t>());
                     return;
                 case 3:
-                    mmu.write_byte(make_address(high, low), rr.get().get_high());
+                    mmu.write_byte(address, rr.get().get_high());
                     return;
                 default:
                     return;
@@ -1156,6 +1162,231 @@ namespace gameboy::cpu {
         }
     private:
         Reg16Ref rr;
+    };
+
+    // JR
+    template<typename CheckCondition, Operand Op1> struct Jr;
+    Jr() -> Jr<void, Operand::i8>;
+    template<typename T>
+    Jr(CycleRef, T) -> Jr<T, Operand::i8>;
+    void relative_jump(int cycle, Registers& regs, Mmu& mmu);
+
+    // JR i8
+    template<>
+    struct Jr<void, Operand::i8> {
+        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            switch (cycle) {
+                case 1:
+                    // Non-conditional: do nothing
+                    return;
+                default:
+                    relative_jump(cycle, regs, mmu);
+                    return;
+            }
+        }
+    };
+
+    // JR cc, i8
+    template<typename CheckCondition>
+    struct Jr<CheckCondition, Operand::i8> {
+        Jr(CycleRef cycle, CheckCondition cc) : m_cycle{cycle}, pred{cc} {}
+        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            switch (cycle) {
+                case 1:
+                    // Conditional: branching
+                    if (!pred(regs)) {
+                        // Skip the jump
+                        --m_cycle;
+                    }
+                    return;
+                default:
+                    relative_jump(cycle, regs, mmu);
+                    return;
+            }
+        }
+    private:
+        CycleRef m_cycle;
+        CheckCondition pred;
+    };
+
+    // JP
+    template<typename CheckCondition, Operand Op1> struct Jp;
+    Jp(Reg16Ref) -> Jp<void, Operand::reg16>;
+    Jp() -> Jp<void, Operand::u16>;
+    template<typename T>
+    Jp(CycleRef, T) -> Jp<T, Operand::u16>;
+    void jump(int cycle, Registers& regs, Mmu& mmu);
+
+    // JP rr
+    template<>
+    struct Jp<void, Operand::reg16> {
+        Jp(Reg16Ref reg1) : rr{reg1} {}
+        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            switch (cycle) {
+                case 0:
+                    regs.program_counter = rr.get();
+                    return;
+                default:
+                    return;
+            }
+        }
+    private:
+        Reg16Ref rr;
+    };
+
+    // JP u16
+    template<>
+    struct Jp<void, Operand::u16> {
+        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            switch (cycle) {
+                case 2:
+                    // Non-conditional: do nothing
+                    return;
+                default:
+                    jump(cycle, regs, mmu);
+                    return;
+            }
+        }
+    };
+
+    // JP cc, u16
+    template<typename CheckCondition>
+    struct Jp<CheckCondition, Operand::u16> {
+        Jp(CycleRef cycle, CheckCondition cc) : m_cycle{cycle}, pred{cc} {}
+        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            switch (cycle) {
+                case 2:
+                    // Conditional: branching
+                    if (!pred(regs)) {
+                        // Skip the jump
+                        --m_cycle;
+                    }
+                    return;
+                default:
+                    jump(cycle, regs, mmu);
+                    return;
+            }
+        }
+    private:
+        CycleRef m_cycle;
+        CheckCondition pred;
+    };
+
+    // RET
+    template<typename CheckCondition> struct Ret;
+    Ret() -> Ret<void>;
+    void ret(int cycle, Registers& regs, Mmu& mmu);
+
+    // RET
+    template<>
+    struct Ret<void> {
+        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            ret(cycle, regs, mmu);
+        }
+    };
+
+    // RET cc
+    template<typename CheckCondition>
+    struct Ret {
+        Ret(CycleRef cycle, CheckCondition cc) : m_cycle{cycle}, pred{cc} {}
+        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            switch (cycle) {
+                case 0:
+                    // Conditional: do nothing
+                    if (!pred(regs)) {
+                        // Skip the jump
+                        m_cycle -= 3;
+                    }
+                    return;
+                default:
+                /*
+                    Perform the same actions as the non-conditional one, while the
+                    timing is postponed for 1 cycle because of the branching above.
+                */
+                    ret(cycle - 1, regs, mmu);
+                    return;
+            }
+        }
+    private:
+        CycleRef m_cycle;
+        CheckCondition pred;
+    };
+
+    // CALL
+    template<typename CheckCondition, Operand Op1> struct Call;
+    Call() -> Call<void, Operand::u16>;
+    template<typename T>
+    Call(CycleRef, T) -> Call<T, Operand::u16>;
+    void call(int cycle, Registers& regs, Mmu& mmu);
+
+    // CALL u16
+    template<>
+    struct Call<void, Operand::u16> {
+        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            switch (cycle) {
+                case 2:
+                    // Non-conditional: do nothing
+                    return;
+                default:
+                    call(cycle, regs, mmu);
+                    return;
+            }
+        }
+    };
+
+    // CALL cc, u16
+    template<typename CheckCondition>
+    struct Call<CheckCondition, Operand::u16> {
+        Call(CycleRef cycle, CheckCondition cc) : m_cycle{cycle}, pred{cc} {}
+        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            switch (cycle) {
+                case 2:
+                    // Conditional: branching
+                    if (!pred(regs)) {
+                        // Skip the jump
+                        m_cycle -= 3;
+                    }
+                    return;
+                default:
+                    call(cycle, regs, mmu);
+                    return;
+            }
+        }
+    private:
+        CycleRef m_cycle;
+        CheckCondition pred;
+    };
+
+    // RST
+    template<int Address>
+    struct Rst {
+        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            switch (cycle) {
+                case 0:
+                    return;
+                case 1:
+                    mmu.write_byte(--regs.sp, regs.program_counter.get_high());
+                    return;
+                case 2:
+                    mmu.write_byte(--regs.sp, regs.program_counter.get_low<std::uint8_t>());
+                    return;
+                case 3:
+                    regs.program_counter = Address;
+                    return;
+                default:
+                    return;
+            }
+        }
     };
 }
 

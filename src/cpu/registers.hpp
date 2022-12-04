@@ -76,7 +76,7 @@ namespace gameboy::cpu {
         PairedRegister de{std::uint8_t{}, std::uint8_t{}};
         PairedRegister hl{std::uint8_t{}, std::uint8_t{}};
         PairedRegister sp{std::uint8_t{}, std::uint8_t{}}; // stack pointer
-        std::uint16_t program_counter;
+        PairedRegister program_counter{std::uint8_t{}, std::uint8_t{}};
     };
 
     void adjust_flag(Registers& flag, FlagAdjustment adjust);

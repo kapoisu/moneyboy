@@ -140,6 +140,11 @@ namespace gameboy::cpu {
                     .opcode{opcode}, .name{"RLA"}, .cycle{1},
                     .execute{Rla{}}
                 };
+            case 0x18:
+                return {
+                    .opcode{opcode}, .name{"JR i8"}, .cycle{3},
+                    .execute = Jr{}
+                };
             case 0x19:
                 return {
                     .opcode{opcode}, .name{"ADD HL, DE"}, .cycle{2},
@@ -175,6 +180,11 @@ namespace gameboy::cpu {
                     .opcode{opcode}, .name{"RRA"}, .cycle{1},
                     .execute{Rra{}}
                 };
+            case 0x20: {
+                    Instruction ins{.opcode{opcode}, .name{"JR NZ, i8"}, .cycle{3}};
+                    ins.execute = Jr{std::ref(ins.cycle), FlagPredicate<Flag::zero, false>{}};
+                    return ins;
+                }
             case 0x21:
                 return {
                     .opcode{opcode}, .name{"LD HL, u16"}, .cycle{3},
@@ -205,6 +215,11 @@ namespace gameboy::cpu {
                     .opcode{opcode}, .name{"LD H, u8"}, .cycle{2},
                     .execute{Ld<reg8, u8>{Reg16High{std::ref(regs.hl)}}}
                 };
+            case 0x28: {
+                    Instruction ins{.opcode{opcode}, .name{"JR Z, i8"}, .cycle{3}};
+                    ins.execute = Jr{std::ref(ins.cycle), FlagPredicate<Flag::zero, true>{}};
+                    return ins;
+                }
             case 0x29:
                 return {
                     .opcode{opcode}, .name{"ADD HL, HL"}, .cycle{2},
@@ -235,6 +250,11 @@ namespace gameboy::cpu {
                     .opcode{opcode}, .name{"LD L, u8"}, .cycle{2},
                     .execute{Ld<reg8, u8>{Reg16Low{std::ref(regs.hl)}}}
                 };
+            case 0x30: {
+                    Instruction ins{.opcode{opcode}, .name{"JR NC, i8"}, .cycle{3}};
+                    ins.execute = Jr{std::ref(ins.cycle), FlagPredicate<Flag::carry, false>{}};
+                    return ins;
+                }
             case 0x31:
                 return {
                     .opcode{opcode}, .name{"LD SP, u16"}, .cycle{3},
@@ -265,6 +285,11 @@ namespace gameboy::cpu {
                     .opcode{opcode}, .name{"LD (HL), u8"}, .cycle{3},
                     .execute{Ld<reg16_address, u8>{std::ref(regs.hl)}}
                 };
+            case 0x38: {
+                    Instruction ins{.opcode{opcode}, .name{"JR C, i8"}, .cycle{3}};
+                    ins.execute = Jr{std::ref(ins.cycle), FlagPredicate<Flag::carry, true>{}};
+                    return ins;
+                }
             case 0x39:
                 return {
                     .opcode{opcode}, .name{"ADD HL, SP"}, .cycle{2},
@@ -930,11 +955,31 @@ namespace gameboy::cpu {
                     .opcode{opcode}, .name{"CP A, A"}, .cycle{1},
                     .execute{Cp<reg8, reg8>{Reg16High{std::ref(regs.af)}}}
                 };
+            case 0xC0: {
+                    Instruction ins{.opcode{opcode}, .name{"RET NZ"}, .cycle{5}};
+                    ins.execute = Ret{std::ref(ins.cycle), FlagPredicate<Flag::zero, false>{}};
+                    return ins;
+                }
             case 0xC1:
                 return {
                     .opcode{opcode}, .name{"POP BC"}, .cycle{3},
                     .execute{Pop<without_flag>{std::ref(regs.bc)}}
                 };
+            case 0xC2: {
+                    Instruction ins{.opcode{opcode}, .name{"JP NZ, u16"}, .cycle{4}};
+                    ins.execute = Jp{std::ref(ins.cycle), FlagPredicate<Flag::zero, false>{}};
+                    return ins;
+                }
+            case 0xC3: {
+                    Instruction ins{.opcode{opcode}, .name{"JP u16"}, .cycle{4}};
+                    ins.execute = Jp{};
+                    return ins;
+                }
+            case 0xC4: {
+                    Instruction ins{.opcode{opcode}, .name{"CALL NZ, u16"}, .cycle{6}};
+                    ins.execute = Call{std::ref(ins.cycle), FlagPredicate<Flag::zero, false>{}};
+                    return ins;
+                }
             case 0xC5:
                 return {
                     .opcode{opcode}, .name{"PUSH BC"}, .cycle{4},
@@ -945,16 +990,66 @@ namespace gameboy::cpu {
                     .opcode{opcode}, .name{"ADD A, u8"}, .cycle{2},
                     .execute{Add<reg8, u8>{}}
                 };
+            case 0xC7:
+                return {
+                    .opcode{opcode}, .name{"RST 00h"}, .cycle{4},
+                    .execute{Rst<0x00>{}}
+                };
+            case 0xC8: {
+                    Instruction ins{.opcode{opcode}, .name{"RET Z"}, .cycle{5}};
+                    ins.execute = Ret{std::ref(ins.cycle), FlagPredicate<Flag::zero, true>{}};
+                    return ins;
+                }
+            case 0xC9:
+                return {
+                    .opcode{opcode}, .name{"RET"}, .cycle{4},
+                    .execute{Ret{}}
+                };
+            case 0xCA: {
+                    Instruction ins{.opcode{opcode}, .name{"JP Z, u16"}, .cycle{4}};
+                    ins.execute = Jp{std::ref(ins.cycle), FlagPredicate<Flag::zero, true>{}};
+                    return ins;
+                }
+            case 0xCC: {
+                    Instruction ins{.opcode{opcode}, .name{"CALL Z, u16"}, .cycle{6}};
+                    ins.execute = Call{std::ref(ins.cycle), FlagPredicate<Flag::zero, true>{}};
+                    return ins;
+                }
+            case 0xCD:
+                return {
+                    .opcode{opcode}, .name{"CALL u16"}, .cycle{6},
+                    .execute{Call{}}
+                };
             case 0xCE:
                 return {
                     .opcode{opcode}, .name{"ADC A, u8"}, .cycle{2},
                     .execute{Adc<reg8, u8>{}}
                 };
+            case 0xCF:
+                return {
+                    .opcode{opcode}, .name{"RST 08h"}, .cycle{4},
+                    .execute{Rst<0x08>{}}
+                };
+            case 0xD0: {
+                    Instruction ins{.opcode{opcode}, .name{"RET NC"}, .cycle{5}};
+                    ins.execute = Ret{std::ref(ins.cycle), FlagPredicate<Flag::carry, false>{}};
+                    return ins;
+                }
             case 0xD1:
                 return {
                     .opcode{opcode}, .name{"POP DE"}, .cycle{3},
                     .execute{Pop<without_flag>{std::ref(regs.de)}}
                 };
+            case 0xD2: {
+                    Instruction ins{.opcode{opcode}, .name{"JP NC, u16"}, .cycle{4}};
+                    ins.execute = Jp{std::ref(ins.cycle), FlagPredicate<Flag::carry, false>{}};
+                    return ins;
+                }
+            case 0xD4: {
+                    Instruction ins{.opcode{opcode}, .name{"CALL NC, u16"}, .cycle{6}};
+                    ins.execute = Call{std::ref(ins.cycle), FlagPredicate<Flag::carry, false>{}};
+                    return ins;
+                }
             case 0xD5:
                 return {
                     .opcode{opcode}, .name{"PUSH DE"}, .cycle{4},
@@ -965,10 +1060,35 @@ namespace gameboy::cpu {
                     .opcode{opcode}, .name{"SUB A, u8"}, .cycle{2},
                     .execute{Sub<reg8, u8>{}}
                 };
+            case 0xD7:
+                return {
+                    .opcode{opcode}, .name{"RST 10h"}, .cycle{4},
+                    .execute{Rst<0x10>{}}
+                };
+            case 0xD8: {
+                    Instruction ins{.opcode{opcode}, .name{"RET C"}, .cycle{5}};
+                    ins.execute = Ret{std::ref(ins.cycle), FlagPredicate<Flag::zero, true>{}};
+                    return ins;
+                }
+            case 0xDA: {
+                    Instruction ins{.opcode{opcode}, .name{"JP C, u16"}, .cycle{4}};
+                    ins.execute = Jp{std::ref(ins.cycle), FlagPredicate<Flag::zero, true>{}};
+                    return ins;
+                }
+            case 0xDC: {
+                    Instruction ins{.opcode{opcode}, .name{"CALL C, u16"}, .cycle{6}};
+                    ins.execute = Call{std::ref(ins.cycle), FlagPredicate<Flag::carry, true>{}};
+                    return ins;
+                }
             case 0xDE:
                 return {
                     .opcode{opcode}, .name{"SBC A, u8"}, .cycle{2},
                     .execute{Sbc<reg8, u8>{}}
+                };
+            case 0xDF:
+                return {
+                    .opcode{opcode}, .name{"RST 18h"}, .cycle{4},
+                    .execute{Rst<0x18>{}}
                 };
             case 0xE0:
                 return {
@@ -995,10 +1115,20 @@ namespace gameboy::cpu {
                     .opcode{opcode}, .name{"AND A, u8"}, .cycle{2},
                     .execute{And<reg8, u8>{}}
                 };
+            case 0xE7:
+                return {
+                    .opcode{opcode}, .name{"RST 20h"}, .cycle{4},
+                    .execute{Rst<0x20>{}}
+                };
             case 0xE8:
                 return {
                     .opcode{opcode}, .name{"ADD SP, i8"}, .cycle{4},
                     .execute{Add<reg16, i8>{std::ref(regs.sp)}}
+                };
+            case 0xE9:
+                return {
+                    .opcode{opcode}, .name{"JP HL"}, .cycle{1},
+                    .execute{Jp{std::ref(regs.hl)}}
                 };
             case 0xEA:
                 return {
@@ -1009,6 +1139,11 @@ namespace gameboy::cpu {
                 return {
                     .opcode{opcode}, .name{"XOR A, u8"}, .cycle{2},
                     .execute{Xor<reg8, u8>{}}
+                };
+            case 0xEF:
+                return {
+                    .opcode{opcode}, .name{"RST 28h"}, .cycle{4},
+                    .execute{Rst<0x28>{}}
                 };
             case 0xF0:
                 return {
@@ -1035,6 +1170,11 @@ namespace gameboy::cpu {
                     .opcode{opcode}, .name{"OR A, u8"}, .cycle{2},
                     .execute{Or<reg8, u8>{}}
                 };
+            case 0xF7:
+                return {
+                    .opcode{opcode}, .name{"RST 30h"}, .cycle{4},
+                    .execute{Rst<0x30>{}}
+                };
             case 0xF8:
                 return {
                     .opcode{opcode}, .name{"LD HL, SP + i8"}, .cycle{3},
@@ -1054,6 +1194,11 @@ namespace gameboy::cpu {
                 return {
                     .opcode{opcode}, .name{"CP A, u8"}, .cycle{2},
                     .execute{Cp<reg8, u8>{}}
+                };
+            case 0xFF:
+                return {
+                    .opcode{opcode}, .name{"RST 38h"}, .cycle{4},
+                    .execute{Rst<0x38>{}}
                 };
         }
     }
