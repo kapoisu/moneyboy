@@ -8,8 +8,13 @@ namespace gameboy::cpu {
             case 0:
                 offset = mmu.read_byte(regs.program_counter++);
                 return;
-            default:
+            case 1:
+                // Specialized action
+                return;
+            case 2:
                 regs.program_counter = static_cast<std::uint16_t>(regs.program_counter + offset);
+                return;
+            default:
                 return;
         }
     }
