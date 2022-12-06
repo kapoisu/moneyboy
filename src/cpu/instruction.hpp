@@ -9,26 +9,31 @@
 
 namespace gameboy::cpu {
     struct Instruction {
+        struct SideEffect {
+            int cycle_adjustment;
+        };
+
+        using Operation = std::function<Instruction::SideEffect(int, Registers&, Mmu&)>;
+
+        enum class Operand {
+            reg16,
+            reg16_address,
+            reg16_offset,
+            reg8,
+            reg8_address,
+            i8,
+            u8,
+            u8_address,
+            u16,
+            u16_address
+        };
+
         int opcode{};
         std::string name{};
-        int cycle{1}; // m-cycle
-        std::function<void(int, Registers&, Mmu&)> execute{[](int cycle, Registers& regs, Mmu&){}};
+        int duration{1}; // m-cycle
+        Operation operation{[](int, Registers&, Mmu&) -> SideEffect { return {};}};
     };
 
-    enum class Operand {
-        reg16,
-        reg16_address,
-        reg16_offset,
-        reg8,
-        reg8_address,
-        i8,
-        u8,
-        u8_address,
-        u16,
-        u16_address
-    };
-
-    using CycleRef = std::reference_wrapper<int>;
     using Reg16Ref = std::reference_wrapper<PairedRegister>;
     using Reg8Getter = std::uint8_t (Reg16Ref::type::*)() const;
     using Reg8Setter = void (Reg16Ref::type::*)(std::uint8_t);
@@ -55,25 +60,28 @@ namespace gameboy::cpu {
 
     // NOP
     struct Nop {
-        void operator()(int cycle, Registers& regs, Mmu&) {}
+        Instruction::SideEffect operator()(int, Registers&, Mmu&)
+        {
+            return {};
+        }
     };
 
     // LD
-    template<Operand Op1, Operand Op2> struct Ld;
+    template<Instruction::Operand Op1, Instruction::Operand Op2> struct Ld;
 
     // LD r, u8
     template<>
-    struct Ld<Operand::reg8, Operand::u8> {
+    struct Ld<Instruction::Operand::reg8, Instruction::Operand::u8> {
         Ld(Reg16High reg1) : rr{reg1.rr}, write{reg1.setter} {}
         Ld(Reg16Low reg1) : rr{reg1.rr}, write{reg1.setter} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0:
                     (rr.get().*write)(mmu.read_byte(regs.program_counter++));
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -83,14 +91,15 @@ namespace gameboy::cpu {
 
     // LD r, r′
     template<>
-    struct Ld<Operand::reg8, Operand::reg8> {
+    struct Ld<Instruction::Operand::reg8, Instruction::Operand::reg8> {
         Ld(Reg16High reg1, Reg16High reg2) : rr1{reg1.rr}, rr2{reg2.rr}, read{reg2.getter}, write{reg1.setter} {}
         Ld(Reg16High reg1, Reg16Low reg2) : rr1{reg1.rr}, rr2{reg2.rr}, read{reg2.getter}, write{reg1.setter} {}
         Ld(Reg16Low reg1, Reg16High reg2) : rr1{reg1.rr}, rr2{reg2.rr}, read{reg2.getter}, write{reg1.setter} {}
         Ld(Reg16Low reg1, Reg16Low reg2) : rr1{reg1.rr}, rr2{reg2.rr}, read{reg2.getter}, write{reg1.setter} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
         {
             (rr1.get().*write)((rr2.get().*read)());
+            return {};
         }
     private:
         Reg16Ref rr1;
@@ -101,17 +110,17 @@ namespace gameboy::cpu {
 
     // LD r, (rr)
     template<>
-    struct Ld<Operand::reg8, Operand::reg16_address> {
+    struct Ld<Instruction::Operand::reg8, Instruction::Operand::reg16_address> {
         Ld(Reg16High reg1, Reg16Ref reg2) : rr1{reg1.rr}, rr2{reg2}, write{reg1.setter} {}
         Ld(Reg16Low reg1, Reg16Ref reg2) : rr1{reg1.rr}, rr2{reg2}, write{reg1.setter} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers&, Mmu& mmu)
         {
             switch (cycle) {
                 case 0:
                     (rr1.get().*write)(mmu.read_byte(rr2.get()));
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -122,19 +131,19 @@ namespace gameboy::cpu {
 
     // LD (rr), u8
     template<>
-    struct Ld<Operand::reg16_address, Operand::u8> {
+    struct Ld<Instruction::Operand::reg16_address, Instruction::Operand::u8> {
         Ld(Reg16Ref reg1) : rr{reg1} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             static std::uint8_t temp{};
             switch (cycle) {
                 case 0:
                     temp = mmu.read_byte(regs.program_counter++);
-                    return;
+                    return {};
                 case 1:
                     mmu.write_byte(rr.get(), temp);
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -143,17 +152,17 @@ namespace gameboy::cpu {
 
     // LD (rr), r
     template<>
-    struct Ld<Operand::reg16_address, Operand::reg8> {
+    struct Ld<Instruction::Operand::reg16_address, Instruction::Operand::reg8> {
         Ld(Reg16Ref reg1, Reg16High reg2) : rr1{reg1}, rr2{reg2.rr}, read{reg2.getter} {}
         Ld(Reg16Ref reg1, Reg16Low reg2) : rr1{reg1}, rr2{reg2.rr}, read{reg2.getter} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers&, Mmu& mmu)
         {
             switch (cycle) {
                 case 0:
                     mmu.write_byte(rr1.get(), (rr2.get().*read)());
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -164,39 +173,39 @@ namespace gameboy::cpu {
 
     // LD A, (u16)
     template<>
-    struct Ld<Operand::reg8, Operand::u16_address>{
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+    struct Ld<Instruction::Operand::reg8, Instruction::Operand::u16_address>{
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             static PairedRegister address{{}, std::uint8_t{}};
             switch (cycle) {
                 case 0:
                     address.set_low(mmu.read_byte(regs.program_counter++));
-                    return;
+                    return {};
                 case 1:
                     address.set_high(mmu.read_byte(regs.program_counter++));
-                    return;
+                    return {};
                 case 2:
                     regs.af.set_high(mmu.read_byte(address));
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     };
 
     // LD A, (FF00 + r)
     template<>
-    struct Ld<Operand::reg8, Operand::reg8_address> {
+    struct Ld<Instruction::Operand::reg8, Instruction::Operand::reg8_address> {
         Ld(Reg16High reg1) : rr{reg1.rr}, read{reg1.getter} {}
         Ld(Reg16Low reg1) : rr{reg1.rr}, read{reg1.getter} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0:
                     regs.af.set_high(mmu.read_byte(0xFF00 + (rr.get().*read)()));
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -206,36 +215,36 @@ namespace gameboy::cpu {
 
     // LD A, (FF00 + u8)
     template<>
-    struct Ld<Operand::reg8, Operand::u8_address> {
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+    struct Ld<Instruction::Operand::reg8, Instruction::Operand::u8_address> {
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             static std::uint8_t offset{};
             switch (cycle) {
                 case 0:
                     offset = mmu.read_byte(regs.program_counter++);
-                    return;
+                    return {};
                 case 1:
                     regs.af.set_high(mmu.read_byte(0xFF00 + offset));
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     };
 
     // LD (FF00 + r), A
     template<>
-    struct Ld<Operand::reg8_address, Operand::reg8> {
+    struct Ld<Instruction::Operand::reg8_address, Instruction::Operand::reg8> {
         Ld(Reg16High reg1) : rr{reg1.rr}, read{reg1.getter} {}
         Ld(Reg16Low reg1) : rr{reg1.rr}, read{reg1.getter} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0:
                     mmu.write_byte(0xFF00 + (rr.get().*read)(), regs.af.get_high());
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -245,38 +254,38 @@ namespace gameboy::cpu {
 
     // LD (FF00 + u8), A
     template<>
-    struct Ld<Operand::u8_address, Operand::reg8> {
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+    struct Ld<Instruction::Operand::u8_address, Instruction::Operand::reg8> {
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             static std::uint8_t offset{};
             switch (cycle) {
                 case 0:
                     offset = mmu.read_byte(regs.program_counter++);
-                    return;
+                    return {};
                 case 1:
                     mmu.write_byte(0xFF00 + offset, regs.af.get_high());
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     };
 
     // LD rr, u16
     template<>
-    struct Ld<Operand::reg16, Operand::u16> {
+    struct Ld<Instruction::Operand::reg16, Instruction::Operand::u16> {
         Ld(Reg16Ref reg1) : rr{reg1} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0:
                     rr.get().set_low(mmu.read_byte(regs.program_counter++));
-                    return;
+                    return {};
                 case 1:
                     rr.get().set_high(mmu.read_byte(regs.program_counter++));
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -285,16 +294,16 @@ namespace gameboy::cpu {
 
     // LD rr, rr′
     template<>
-    struct Ld<Operand::reg16, Operand::reg16> {
+    struct Ld<Instruction::Operand::reg16, Instruction::Operand::reg16> {
         Ld(Reg16Ref reg1, Reg16Ref reg2) : rr1{reg1}, rr2{reg2} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers&, Mmu&)
         {
             switch (cycle) {
                 case 0:
                     rr1.get() = rr2.get();
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -304,23 +313,23 @@ namespace gameboy::cpu {
 
     // LD rr, rr′ + i8
     template<>
-    struct Ld<Operand::reg16, Operand::reg16_offset> {
+    struct Ld<Instruction::Operand::reg16, Instruction::Operand::reg16_offset> {
         Ld(Reg16Ref reg1, Reg16Ref reg2) : rr1{reg1}, rr2{reg2} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             static std::int8_t offset{};
             switch (cycle) {
                 case 0:
                     offset = mmu.read_byte(regs.program_counter++);
-                    return;
+                    return {};
                 case 1: {
                         AluResult result{add(rr2.get(), offset)};
                         rr1.get() = result.output;
                         adjust_flag(regs, {false, false, result.half_carry, result.carry});
                     }
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -330,48 +339,48 @@ namespace gameboy::cpu {
 
     // LD (u16), A
     template<>
-    struct Ld<Operand::u16_address, Operand::reg8>{
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+    struct Ld<Instruction::Operand::u16_address, Instruction::Operand::reg8>{
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             static PairedRegister address{{}, std::uint8_t{}};
             switch (cycle) {
                 case 0:
                     address.set_low(mmu.read_byte(regs.program_counter++));
-                    return;
+                    return {};
                 case 1:
                     address.set_high(mmu.read_byte(regs.program_counter++));
-                    return;
+                    return {};
                 case 2:
                     mmu.write_byte(address, regs.af.get_high());
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     };
 
     // LD (u16), rr
     template<>
-    struct Ld<Operand::u16_address, Operand::reg16> {
+    struct Ld<Instruction::Operand::u16_address, Instruction::Operand::reg16> {
         Ld(Reg16Ref reg1) : rr{reg1} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             static PairedRegister address{{}, std::uint8_t{}};
             switch (cycle) {
                 case 0:
                     address.set_low(mmu.read_byte(regs.program_counter++));
-                    return;
+                    return {};
                 case 1:
                     address.set_high(mmu.read_byte(regs.program_counter++));
-                    return;
+                    return {};
                 case 2:
                     mmu.write_byte(address++, rr.get().get_low<std::uint8_t>());
-                    return;
+                    return {};
                 case 3:
                     mmu.write_byte(address, rr.get().get_high());
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -379,20 +388,20 @@ namespace gameboy::cpu {
     };
 
     // LDI
-    template<Operand Op1, Operand Op2> struct Ldi;
+    template<Instruction::Operand Op1, Instruction::Operand Op2> struct Ldi;
 
     // LD (rr+), A
     template<>
-    struct Ldi<Operand::reg16_address, Operand::reg8> {
+    struct Ldi<Instruction::Operand::reg16_address, Instruction::Operand::reg8> {
         Ldi(Reg16Ref reg1) : rr{reg1} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0:
                     mmu.write_byte(rr.get()--, regs.af.get_high());
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -401,16 +410,16 @@ namespace gameboy::cpu {
 
     // LD A, (rr+)
     template<>
-    struct Ldi<Operand::reg8, Operand::reg16_address> {
+    struct Ldi<Instruction::Operand::reg8, Instruction::Operand::reg16_address> {
         Ldi(Reg16Ref reg1) : rr{reg1} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0:
                     regs.af.set_high(mmu.read_byte(rr.get()++));
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -418,20 +427,20 @@ namespace gameboy::cpu {
     };
 
     // LDD
-    template<Operand Op1, Operand Op2> struct Ldd;
+    template<Instruction::Operand Op1, Instruction::Operand Op2> struct Ldd;
 
     // LD (rr-), A
     template<>
-    struct Ldd<Operand::reg16_address, Operand::reg8> {
+    struct Ldd<Instruction::Operand::reg16_address, Instruction::Operand::reg8> {
         Ldd(Reg16Ref reg1) : rr{reg1} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0:
                     mmu.write_byte(rr.get()--, regs.af.get_high());
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -440,16 +449,16 @@ namespace gameboy::cpu {
 
     // LD A, (rr-)
     template<>
-    struct Ldd<Operand::reg8, Operand::reg16_address> {
+    struct Ldd<Instruction::Operand::reg8, Instruction::Operand::reg16_address> {
         Ldd(Reg16Ref reg1) : rr{reg1} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0:
                     regs.af.set_high(mmu.read_byte(rr.get()--));
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -457,20 +466,20 @@ namespace gameboy::cpu {
     };
 
     // INC
-    template<Operand Op1> struct Inc;
+    template<Instruction::Operand Op1> struct Inc;
 
     // INC rr
     template<>
-    struct Inc<Operand::reg16> {
+    struct Inc<Instruction::Operand::reg16> {
         Inc(Reg16Ref reg1) : rr{reg1} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers&, Mmu&)
         {
             switch (cycle) {
                 case 0:
                     ++rr.get();
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -479,14 +488,15 @@ namespace gameboy::cpu {
 
     // INC r
     template<>
-    struct Inc<Operand::reg8> {
+    struct Inc<Instruction::Operand::reg8> {
         Inc(Reg16High reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
         Inc(Reg16Low reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
         {
             AluResult result{add((rr.get().*read)(), std::uint8_t{1})};
             (rr.get().*write)(result.output);
             adjust_flag(regs, {result.output == 0, false, result.half_carry, {}});
+            return {};
         }
     private:
         Reg16Ref rr;
@@ -496,23 +506,23 @@ namespace gameboy::cpu {
 
     // INC (rr)
     template<>
-    struct Inc<Operand::reg16_address> {
+    struct Inc<Instruction::Operand::reg16_address> {
         Inc(Reg16Ref reg1) : rr{reg1} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             static std::uint8_t temp{};
             switch (cycle) {
                 case 0:
                     temp = mmu.read_byte(rr.get());
-                    break;
+                    return {};
                 case 1: {
                         AluResult result{add(temp, std::uint8_t{1})};
                         adjust_flag(regs, {result.output == 0, false, result.half_carry, {}});
                         mmu.write_byte(rr.get(), result.output);
                     }
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -520,20 +530,20 @@ namespace gameboy::cpu {
     };
 
     // DEC
-    template<Operand Op1> struct Dec;
+    template<Instruction::Operand Op1> struct Dec;
 
     // DEC rr
     template<>
-    struct Dec<Operand::reg16> {
+    struct Dec<Instruction::Operand::reg16> {
         Dec(Reg16Ref reg1) : rr{reg1} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers&, Mmu&)
         {
             switch (cycle) {
                 case 0:
                     --rr.get();
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -542,15 +552,15 @@ namespace gameboy::cpu {
 
     // DEC r
     template<>
-    struct Dec<Operand::reg8> {
+    struct Dec<Instruction::Operand::reg8> {
         Dec(Reg16High reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
         Dec(Reg16Low reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
         {
-
             AluResult result{sub((rr.get().*read)(), std::uint8_t{1})};
             (rr.get().*write)(result.output);
             adjust_flag(regs, {result.output == 0, true, result.half_carry, {}});
+            return {};
         }
     private:
         Reg16Ref rr;
@@ -560,23 +570,23 @@ namespace gameboy::cpu {
 
     // DEC (rr)
     template<>
-    struct Dec<Operand::reg16_address> {
+    struct Dec<Instruction::Operand::reg16_address> {
         Dec(Reg16Ref reg1) : rr{reg1} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             static std::uint8_t temp{};
             switch (cycle) {
                 case 0:
                     temp = mmu.read_byte(rr.get());
-                    break;
+                    return {};
                 case 1: {
                         AluResult result{sub(temp, std::uint8_t{1})};
                         adjust_flag(regs, {result.output == 0, true, result.half_carry, {}});
                         mmu.write_byte(rr.get(), result.output);
                     }
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -584,18 +594,19 @@ namespace gameboy::cpu {
     };
 
     // ADD
-    template<Operand Op1, Operand Op2> struct Add;
+    template<Instruction::Operand Op1, Instruction::Operand Op2> struct Add;
 
     // ADD A, r
     template<>
-    struct Add<Operand::reg8, Operand::reg8> {
+    struct Add<Instruction::Operand::reg8, Instruction::Operand::reg8> {
         Add(Reg16High reg1) : rr{reg1.rr}, read{reg1.getter} {}
         Add(Reg16Low reg1) : rr{reg1.rr}, read{reg1.getter} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
         {
             AluResult result{add(regs.af.get_high(), (rr.get().*read)())};
             regs.af.set_high(result.output);
             adjust_flag(regs, {result.output == 0, false, result.half_carry, result.carry});
+            return {};
         }
     private:
         Reg16Ref rr;
@@ -604,9 +615,9 @@ namespace gameboy::cpu {
 
     // ADD A, (rr)
     template<>
-    struct Add<Operand::reg8, Operand::reg16_address> {
+    struct Add<Instruction::Operand::reg8, Instruction::Operand::reg16_address> {
         Add(Reg16Ref reg1) : rr{reg1} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0: {
@@ -614,9 +625,9 @@ namespace gameboy::cpu {
                         regs.af.set_high(result.output);
                         adjust_flag(regs, {result.output == 0, false, result.half_carry, result.carry});
                     };
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -625,8 +636,8 @@ namespace gameboy::cpu {
 
     // ADD A, u8
     template<>
-    struct Add<Operand::reg8, Operand::u8> {
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+    struct Add<Instruction::Operand::reg8, Instruction::Operand::u8> {
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0: {
@@ -634,32 +645,32 @@ namespace gameboy::cpu {
                         regs.af.set_high(result.output);
                         adjust_flag(regs, {result.output == 0, false, result.half_carry, result.carry});
                     };
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     };
 
     // ADD rr, i8
     template<>
-    struct Add<Operand::reg16, Operand::i8> {
+    struct Add<Instruction::Operand::reg16, Instruction::Operand::i8> {
         Add(Reg16Ref reg1) : rr{reg1} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             static std::int8_t temp{};
             switch (cycle) {
                 case 0:
                     temp = mmu.read_byte(regs.program_counter++);
-                    return;
+                    return {};
                 case 1: {
                         AluResult result{add(rr.get(), temp)};
                         rr.get() = result.output;
                         adjust_flag(regs, {false, false, result.half_carry, result.carry});
                     }
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -668,9 +679,9 @@ namespace gameboy::cpu {
 
     // ADD rr, rr
     template<>
-    struct Add<Operand::reg16, Operand::reg16> {
+    struct Add<Instruction::Operand::reg16, Instruction::Operand::reg16> {
         Add(Reg16Ref reg1, Reg16Ref reg2) : rr1{reg1}, rr2{reg2} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu&)
         {
             switch (cycle) {
                 case 0: {
@@ -678,9 +689,9 @@ namespace gameboy::cpu {
                         rr1.get() = result.output;
                         adjust_flag(regs, {{}, false, result.half_carry, result.carry});
                     }
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -689,18 +700,19 @@ namespace gameboy::cpu {
     };
 
     // ADC
-    template<Operand Op1, Operand Op2> struct Adc;
+    template<Instruction::Operand Op1, Instruction::Operand Op2> struct Adc;
 
     // ADC A, r
     template<>
-    struct Adc<Operand::reg8, Operand::reg8> {
+    struct Adc<Instruction::Operand::reg8, Instruction::Operand::reg8> {
         Adc(Reg16High reg1) : rr{reg1.rr}, read{reg1.getter} {}
         Adc(Reg16Low reg1) : rr{reg1.rr}, read{reg1.getter} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
         {
             AluResult result{add(regs.af.get_high(), (rr.get().*read)(), regs[Flag::carry])};
             regs.af.set_high(result.output);
             adjust_flag(regs, {result.output == 0, false, result.half_carry, result.carry});
+            return {};
         }
     private:
         Reg16Ref rr;
@@ -709,9 +721,9 @@ namespace gameboy::cpu {
 
     // ADC A, (rr)
     template<>
-    struct Adc<Operand::reg8, Operand::reg16_address> {
+    struct Adc<Instruction::Operand::reg8, Instruction::Operand::reg16_address> {
         Adc(Reg16Ref reg1) : rr{reg1} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
             case 0: {
@@ -719,9 +731,9 @@ namespace gameboy::cpu {
                     regs.af.set_high(result.output);
                     adjust_flag(regs, {result.output == 0, false, result.half_carry, result.carry});
                 };
-                return;
+                return {};
             default:
-                return;
+                return {};
             }
         }
     private:
@@ -730,8 +742,8 @@ namespace gameboy::cpu {
 
     // ADC A, u8
     template<>
-    struct Adc<Operand::reg8, Operand::u8> {
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+    struct Adc<Instruction::Operand::reg8, Instruction::Operand::u8> {
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0: {
@@ -739,26 +751,27 @@ namespace gameboy::cpu {
                         regs.af.set_high(result.output);
                         adjust_flag(regs, {result.output == 0, false, result.half_carry, result.carry});
                     };
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     };
 
     // SUB
-    template<Operand Op1, Operand Op2> struct Sub;
+    template<Instruction::Operand Op1, Instruction::Operand Op2> struct Sub;
 
     // SUB A, r
     template<>
-    struct Sub<Operand::reg8, Operand::reg8> {
+    struct Sub<Instruction::Operand::reg8, Instruction::Operand::reg8> {
         Sub(Reg16High reg1) : rr{reg1.rr}, read{reg1.getter} {}
         Sub(Reg16Low reg1) : rr{reg1.rr}, read{reg1.getter} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
         {
             AluResult result{sub(regs.af.get_high(), (rr.get().*read)())};
             regs.af.set_high(result.output);
             adjust_flag(regs, {result.output == 0, true, result.half_carry, result.carry});
+            return {};
         }
     private:
         Reg16Ref rr;
@@ -767,9 +780,9 @@ namespace gameboy::cpu {
 
     // SUB A, (rr)
     template<>
-    struct Sub<Operand::reg8, Operand::reg16_address> {
+    struct Sub<Instruction::Operand::reg8, Instruction::Operand::reg16_address> {
         Sub(Reg16Ref reg1) : rr{reg1} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0: {
@@ -777,9 +790,9 @@ namespace gameboy::cpu {
                         regs.af.set_high(result.output);
                         adjust_flag(regs, {result.output == 0, true, result.half_carry, result.carry});
                     };
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -788,8 +801,8 @@ namespace gameboy::cpu {
 
     // SUB A, u8
     template<>
-    struct Sub<Operand::reg8, Operand::u8> {
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+    struct Sub<Instruction::Operand::reg8, Instruction::Operand::u8> {
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0: {
@@ -797,26 +810,27 @@ namespace gameboy::cpu {
                         regs.af.set_high(result.output);
                         adjust_flag(regs, {result.output == 0, true, result.half_carry, result.carry});
                     };
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     };
 
     // SBC
-    template<Operand Op1, Operand Op2> struct Sbc;
+    template<Instruction::Operand Op1, Instruction::Operand Op2> struct Sbc;
 
     // SBC A, r
     template<>
-    struct Sbc<Operand::reg8, Operand::reg8> {
+    struct Sbc<Instruction::Operand::reg8, Instruction::Operand::reg8> {
         Sbc(Reg16High reg1) : rr{reg1.rr}, read{reg1.getter} {}
         Sbc(Reg16Low reg1) : rr{reg1.rr}, read{reg1.getter} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
         {
             AluResult result{sub(regs.af.get_high(), (rr.get().*read)(), regs[Flag::carry])};
             regs.af.set_high(result.output);
             adjust_flag(regs, {result.output == 0, true, result.half_carry, result.carry});
+            return {};
         }
     private:
         Reg16Ref rr;
@@ -825,9 +839,9 @@ namespace gameboy::cpu {
 
     // SBC A, (rr)
     template<>
-    struct Sbc<Operand::reg8, Operand::reg16_address> {
+    struct Sbc<Instruction::Operand::reg8, Instruction::Operand::reg16_address> {
         Sbc(Reg16Ref reg1) : rr{reg1} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
             case 0: {
@@ -835,9 +849,9 @@ namespace gameboy::cpu {
                     regs.af.set_high(result.output);
                     adjust_flag(regs, {result.output == 0, true, result.half_carry, result.carry});
                 };
-                return;
+                return {};
             default:
-                return;
+                return {};
             }
         }
     private:
@@ -846,8 +860,8 @@ namespace gameboy::cpu {
 
     // SBC A, u8
     template<>
-    struct Sbc<Operand::reg8, Operand::u8> {
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+    struct Sbc<Instruction::Operand::reg8, Instruction::Operand::u8> {
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0: {
@@ -855,25 +869,26 @@ namespace gameboy::cpu {
                         regs.af.set_high(result.output);
                         adjust_flag(regs, {result.output == 0, true, result.half_carry, result.carry});
                     };
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     };
 
     // AND
-    template<Operand Op1, Operand Op2> struct And;
+    template<Instruction::Operand Op1, Instruction::Operand Op2> struct And;
 
     // AND A, r
     template<>
-    struct And<Operand::reg8, Operand::reg8> {
+    struct And<Instruction::Operand::reg8, Instruction::Operand::reg8> {
         And(Reg16High reg1) : rr{reg1.rr}, read{reg1.getter} {}
         And(Reg16Low reg1) : rr{reg1.rr}, read{reg1.getter} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
         {
             regs.af.set_high(regs.af.get_high() & (rr.get().*read)());
             adjust_flag(regs, {regs.af.get_high() == 0, false, true, false});
+            return {};
         }
     private:
         Reg16Ref rr;
@@ -882,17 +897,17 @@ namespace gameboy::cpu {
 
     // AND A, (rr)
     template<>
-    struct And<Operand::reg8, Operand::reg16_address> {
+    struct And<Instruction::Operand::reg8, Instruction::Operand::reg16_address> {
         And(Reg16Ref reg1) : rr{reg1} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0:
                     regs.af.set_high(regs.af.get_high() & mmu.read_byte(rr.get()));
                     adjust_flag(regs, {regs.af.get_high() == 0, false, true, false});
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -901,32 +916,33 @@ namespace gameboy::cpu {
 
     // AND A, u8
     template<>
-    struct And<Operand::reg8, Operand::u8> {
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+    struct And<Instruction::Operand::reg8, Instruction::Operand::u8> {
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0:
                     regs.af.set_high(regs.af.get_high() & mmu.read_byte(regs.program_counter++));
                     adjust_flag(regs, {regs.af.get_high() == 0, false, true, false});
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     };
 
     // XOR
-    template<Operand Op1, Operand Op2> struct Xor;
+    template<Instruction::Operand Op1, Instruction::Operand Op2> struct Xor;
 
     // XOR A, r
     template<>
-    struct Xor<Operand::reg8, Operand::reg8> {
+    struct Xor<Instruction::Operand::reg8, Instruction::Operand::reg8> {
         Xor(Reg16High reg1) : rr{reg1.rr}, read{reg1.getter} {}
         Xor(Reg16Low reg1) : rr{reg1.rr}, read{reg1.getter} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
         {
             regs.af.set_high(regs.af.get_high() ^ (rr.get().*read)());
             adjust_flag(regs, {regs.af.get_high() == 0, false, false, false});
+            return {};
         }
     private:
         Reg16Ref rr;
@@ -935,17 +951,17 @@ namespace gameboy::cpu {
 
     // XOR A, (rr)
     template<>
-    struct Xor<Operand::reg8, Operand::reg16_address> {
+    struct Xor<Instruction::Operand::reg8, Instruction::Operand::reg16_address> {
         Xor(Reg16Ref reg1) : rr{reg1} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0:
                     regs.af.set_high(regs.af.get_high() ^ mmu.read_byte(rr.get()));
                     adjust_flag(regs, {regs.af.get_high() == 0, false, false, false});
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -954,32 +970,33 @@ namespace gameboy::cpu {
 
     // XOR A, u8
     template<>
-    struct Xor<Operand::reg8, Operand::u8> {
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+    struct Xor<Instruction::Operand::reg8, Instruction::Operand::u8> {
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0:
                     regs.af.set_high(regs.af.get_high() ^ mmu.read_byte(regs.program_counter++));
                     adjust_flag(regs, {regs.af.get_high() == 0, false, false, false});
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     };
 
     // OR
-    template<Operand Op1, Operand Op2> struct Or;
+    template<Instruction::Operand Op1, Instruction::Operand Op2> struct Or;
 
     // OR A, r
     template<>
-    struct Or<Operand::reg8, Operand::reg8> {
+    struct Or<Instruction::Operand::reg8, Instruction::Operand::reg8> {
         Or(Reg16High reg1) : rr{reg1.rr}, read{reg1.getter} {}
         Or(Reg16Low reg1) : rr{reg1.rr}, read{reg1.getter} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
         {
             regs.af.set_high(regs.af.get_high() | (rr.get().*read)());
             adjust_flag(regs, {regs.af.get_high() == 0, false, false, false});
+            return {};
         }
     private:
         Reg16Ref rr;
@@ -988,17 +1005,17 @@ namespace gameboy::cpu {
 
     // OR A, (rr)
     template<>
-    struct Or<Operand::reg8, Operand::reg16_address> {
+    struct Or<Instruction::Operand::reg8, Instruction::Operand::reg16_address> {
         Or(Reg16Ref reg1) : rr{reg1} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0:
                     regs.af.set_high(regs.af.get_high() | mmu.read_byte(rr.get()));
                     adjust_flag(regs, {regs.af.get_high() == 0, false, false, false});
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -1007,32 +1024,33 @@ namespace gameboy::cpu {
 
     // OR A, u8
     template<>
-    struct Or<Operand::reg8, Operand::u8> {
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+    struct Or<Instruction::Operand::reg8, Instruction::Operand::u8> {
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0:
                     regs.af.set_high(regs.af.get_high() | mmu.read_byte(regs.program_counter++));
                     adjust_flag(regs, {regs.af.get_high() == 0, false, false, false});
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     };
 
     // CP
-    template<Operand Op1, Operand Op2> struct Cp;
+    template<Instruction::Operand Op1, Instruction::Operand Op2> struct Cp;
 
     // CP A, r
     template<>
-    struct Cp<Operand::reg8, Operand::reg8> {
+    struct Cp<Instruction::Operand::reg8, Instruction::Operand::reg8> {
         Cp(Reg16High reg1) : rr{reg1.rr}, read{reg1.getter} {}
         Cp(Reg16Low reg1) : rr{reg1.rr}, read{reg1.getter} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
         {
             AluResult result{sub(regs.af.get_high(), (rr.get().*read)())};
             adjust_flag(regs, {result.output == 0, true, result.half_carry, result.carry});
+            return {};
         }
     private:
         Reg16Ref rr;
@@ -1041,18 +1059,18 @@ namespace gameboy::cpu {
 
     // CP A, (rr)
     template<>
-    struct Cp<Operand::reg8, Operand::reg16_address> {
+    struct Cp<Instruction::Operand::reg8, Instruction::Operand::reg16_address> {
         Cp(Reg16Ref reg1) : rr{reg1} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0: {
                         AluResult result{sub(regs.af.get_high(), mmu.read_byte(rr.get()))};
                         adjust_flag(regs, {result.output == 0, true, result.half_carry, result.carry});
                     }
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -1061,54 +1079,58 @@ namespace gameboy::cpu {
 
     // CP A, u8
     template<>
-    struct Cp<Operand::reg8, Operand::u8> {
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+    struct Cp<Instruction::Operand::reg8, Instruction::Operand::u8> {
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0: {
                         AluResult result{sub(regs.af.get_high(), mmu.read_byte(regs.program_counter++))};
                         adjust_flag(regs, {result.output == 0, true, result.half_carry, result.carry});
                     }
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     };
 
     // RLCA
     struct Rlca {
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
         {
             AluResult result{rlc(regs.af.get_high())};
             adjust_flag(regs, {false, false, false, result.carry});
+            return {};
         }
     };
 
     // RRCA
     struct Rrca {
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
         {
             AluResult result{rrc(regs.af.get_high())};
             adjust_flag(regs, {false, false, false, result.carry});
+            return {};
         }
     };
 
     // RLA
     struct Rla {
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
         {
             AluResult result{rl(regs.af.get_high(), regs[Flag::carry])};
             adjust_flag(regs, {false, false, false, result.carry});
+            return {};
         }
     };
 
     // RRA
     struct Rra {
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
         {
             AluResult result{rr(regs.af.get_high(), regs[Flag::carry])};
             adjust_flag(regs, {false, false, false, result.carry});
+            return {};
         }
     };
 
@@ -1116,7 +1138,7 @@ namespace gameboy::cpu {
     template<bool Reg16ContainsFlag>
     struct Pop {
         Pop(Reg16Ref reg1) : rr{reg1} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0:
@@ -1126,12 +1148,12 @@ namespace gameboy::cpu {
                     else {
                         rr.get().set_low(mmu.read_byte(regs.sp++));
                     }
-                    return;
+                    return {};
                 case 1:
                     rr.get().set_high(mmu.read_byte(regs.sp++));
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -1142,12 +1164,12 @@ namespace gameboy::cpu {
     template<bool Reg16ContainsFlag>
     struct Push {
         Push(Reg16Ref reg1) : rr{reg1} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 1:
                     mmu.write_byte(--regs.sp, rr.get().get_high());
-                    return;
+                    return {};
                 case 2:
                     if constexpr (Reg16ContainsFlag) {
                         mmu.write_byte(--regs.sp, rr.get().get_low<FlagRegister>().data());
@@ -1155,9 +1177,9 @@ namespace gameboy::cpu {
                     else {
                         mmu.write_byte(--regs.sp, rr.get().get_low<std::uint8_t>());
                     }
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     private:
@@ -1165,73 +1187,67 @@ namespace gameboy::cpu {
     };
 
     // JR
-    template<typename CheckCondition, Operand Op1> struct Jr;
-    Jr() -> Jr<void, Operand::i8>;
+    template<typename CheckCondition, Instruction::Operand Op1> struct Jr;
+    Jr() -> Jr<void, Instruction::Operand::i8>;
     template<typename T>
-    Jr(CycleRef, T) -> Jr<T, Operand::i8>;
+    Jr(T) -> Jr<T, Instruction::Operand::i8>;
     void relative_jump(int cycle, Registers& regs, Mmu& mmu);
 
     // JR i8
     template<>
-    struct Jr<void, Operand::i8> {
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+    struct Jr<void, Instruction::Operand::i8> {
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 1:
                     // Non-conditional: do nothing
-                    return;
+                    return {};
                 default:
                     relative_jump(cycle, regs, mmu);
-                    return;
+                    return {};
             }
         }
     };
 
     // JR cc, i8
     template<typename CheckCondition>
-    struct Jr<CheckCondition, Operand::i8> {
-        Jr(CycleRef cycle, CheckCondition cc) : m_cycle{cycle}, pred{cc} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+    struct Jr<CheckCondition, Instruction::Operand::i8> {
+        Jr(CheckCondition cc) : pred{cc} {}
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 1:
                     // Conditional: branching
                     if (!pred(regs)) {
                         // Skip the jump
-                        --m_cycle;
+                        return {.cycle_adjustment{-1}};
                     }
-                    return;
+                    return {};
                 default:
                     relative_jump(cycle, regs, mmu);
-                    return;
+                    return {};
             }
         }
     private:
-        CycleRef m_cycle;
         CheckCondition pred;
     };
 
     // JP
-    template<typename CheckCondition, Operand Op1> struct Jp;
-    Jp(Reg16Ref) -> Jp<void, Operand::reg16>;
-    Jp() -> Jp<void, Operand::u16>;
+    template<typename CheckCondition, Instruction::Operand Op1> struct Jp;
+    Jp() -> Jp<void, Instruction::Operand::u16>;
+    Jp(Reg16Ref) -> Jp<void, Instruction::Operand::reg16>;
     template<typename T>
-    Jp(CycleRef, T) -> Jp<T, Operand::u16>;
+    Jp(T) -> Jp<T, Instruction::Operand::u16>;
     void jump(int cycle, Registers& regs, Mmu& mmu);
 
     // JP rr
     template<>
-    struct Jp<void, Operand::reg16> {
+    struct Jp<void, Instruction::Operand::reg16> {
         Jp(Reg16Ref reg1) : rr{reg1} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
         {
-            switch (cycle) {
-                case 0:
-                    regs.program_counter = rr.get();
-                    return;
-                default:
-                    return;
-            }
+            regs.program_counter = rr.get();
+            return {};
         }
     private:
         Reg16Ref rr;
@@ -1239,41 +1255,40 @@ namespace gameboy::cpu {
 
     // JP u16
     template<>
-    struct Jp<void, Operand::u16> {
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+    struct Jp<void, Instruction::Operand::u16> {
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 2:
                     // Non-conditional: do nothing
-                    return;
+                    return {};
                 default:
                     jump(cycle, regs, mmu);
-                    return;
+                    return {};
             }
         }
     };
 
     // JP cc, u16
     template<typename CheckCondition>
-    struct Jp<CheckCondition, Operand::u16> {
-        Jp(CycleRef cycle, CheckCondition cc) : m_cycle{cycle}, pred{cc} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+    struct Jp<CheckCondition, Instruction::Operand::u16> {
+        Jp(CheckCondition cc) : pred{cc} {}
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 2:
                     // Conditional: branching
                     if (!pred(regs)) {
                         // Skip the jump
-                        --m_cycle;
+                        return {.cycle_adjustment{-1}};
                     }
-                    return;
+                    return {};
                 default:
                     jump(cycle, regs, mmu);
-                    return;
+                    return {};
             }
         }
     private:
-        CycleRef m_cycle;
         CheckCondition pred;
     };
 
@@ -1285,106 +1300,105 @@ namespace gameboy::cpu {
     // RET
     template<>
     struct Ret<void> {
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             ret(cycle, regs, mmu);
+            return {};
         }
     };
 
     // RET cc
     template<typename CheckCondition>
     struct Ret {
-        Ret(CycleRef cycle, CheckCondition cc) : m_cycle{cycle}, pred{cc} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Ret(CheckCondition cc) : pred{cc} {}
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0:
                     // Conditional: do nothing
                     if (!pred(regs)) {
                         // Skip the jump
-                        m_cycle -= 3;
+                        return {.cycle_adjustment{-3}};
                     }
-                    return;
+                    return {};
                 default:
                 /*
                     Perform the same actions as the non-conditional one, while the
                     timing is postponed for 1 cycle because of the branching above.
                 */
                     ret(cycle - 1, regs, mmu);
-                    return;
+                    return {};
             }
         }
     private:
-        CycleRef m_cycle;
         CheckCondition pred;
     };
 
     // CALL
-    template<typename CheckCondition, Operand Op1> struct Call;
-    Call() -> Call<void, Operand::u16>;
+    template<typename CheckCondition, Instruction::Operand Op1> struct Call;
+    Call() -> Call<void, Instruction::Operand::u16>;
     template<typename T>
-    Call(CycleRef, T) -> Call<T, Operand::u16>;
+    Call(T) -> Call<T, Instruction::Operand::u16>;
     void call(int cycle, Registers& regs, Mmu& mmu);
 
     // CALL u16
     template<>
-    struct Call<void, Operand::u16> {
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+    struct Call<void, Instruction::Operand::u16> {
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 2:
                     // Non-conditional: do nothing
-                    return;
+                    return {};
                 default:
                     call(cycle, regs, mmu);
-                    return;
+                    return {};
             }
         }
     };
 
     // CALL cc, u16
     template<typename CheckCondition>
-    struct Call<CheckCondition, Operand::u16> {
-        Call(CycleRef cycle, CheckCondition cc) : m_cycle{cycle}, pred{cc} {}
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+    struct Call<CheckCondition, Instruction::Operand::u16> {
+        Call(CheckCondition cc) : pred{cc} {}
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 2:
                     // Conditional: branching
                     if (!pred(regs)) {
                         // Skip the jump
-                        m_cycle -= 3;
+                        return {.cycle_adjustment{-3}};
                     }
-                    return;
+                    return {};
                 default:
                     call(cycle, regs, mmu);
-                    return;
+                    return {};
             }
         }
     private:
-        CycleRef m_cycle;
         CheckCondition pred;
     };
 
     // RST
     template<int Address>
     struct Rst {
-        void operator()(int cycle, Registers& regs, Mmu& mmu)
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
         {
             switch (cycle) {
                 case 0:
-                    return;
+                    return {};
                 case 1:
                     mmu.write_byte(--regs.sp, regs.program_counter.get_high());
-                    return;
+                    return {};
                 case 2:
                     mmu.write_byte(--regs.sp, regs.program_counter.get_low<std::uint8_t>());
-                    return;
+                    return {};
                 case 3:
                     regs.program_counter = Address;
-                    return;
+                    return {};
                 default:
-                    return;
+                    return {};
             }
         }
     };

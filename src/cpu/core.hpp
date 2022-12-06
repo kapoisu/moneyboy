@@ -14,6 +14,7 @@ namespace gameboy::cpu {
         static constexpr double frequency{1.048576e6};
     private:
         Instruction decode(int opcode);
+        void execute(const Instruction::Operation& func, int cycle);
 
         Instruction instruction{};
         Mmu mmu{"res/DMG_boot"};
