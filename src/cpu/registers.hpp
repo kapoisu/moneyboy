@@ -10,7 +10,7 @@
 namespace gameboy::cpu {
     enum class Flag : std::uint8_t {
         zero = 1 << 7,
-        negative = 1 << 6,
+        negation = 1 << 6,
         half_carry = 1 << 5,
         carry = 1 << 4
     };
@@ -37,11 +37,6 @@ namespace gameboy::cpu {
         std::optional<bool> condition_n;
         std::optional<bool> condition_h;
         std::optional<bool> condition_c;
-    };
-
-    union Reg8Variant {
-        FlagRegister flag;
-        std::uint8_t number;
     };
 
     class PairedRegister {

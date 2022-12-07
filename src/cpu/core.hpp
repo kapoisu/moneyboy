@@ -15,10 +15,12 @@ namespace gameboy::cpu {
     private:
         Instruction decode(int opcode);
         void execute(const Instruction::Operation& func, int cycle);
+        Instruction::SideEffect resolve_prefixed_instruction();
 
         Instruction instruction{};
         Mmu mmu{"res/DMG_boot"};
         Registers regs{};
+        bool interrupt_master_enable{};
     };
 }
 

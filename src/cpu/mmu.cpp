@@ -13,7 +13,7 @@ namespace gameboy {
 
     std::uint8_t Mmu::read_byte(int address) const
     {
-        return boot_rom[address];
+        return ram[address];
     }
 
     void Mmu::write_byte(int address, std::uint8_t value)

@@ -23,7 +23,7 @@ namespace gameboy::cpu {
         switch (option) {
             case Flag::zero:
                 return layout[7];
-            case Flag::negative:
+            case Flag::negation:
                 return layout[6];
             case Flag::half_carry:
                 return layout[5];
@@ -95,7 +95,7 @@ namespace gameboy::cpu {
         }
 
         if (adjust.condition_n.has_value()) {
-            adjust.condition_n.value() ? temp.set(Flag::negative) : temp.reset(Flag::negative);
+            adjust.condition_n.value() ? temp.set(Flag::negation) : temp.reset(Flag::negation);
         }
 
         if (adjust.condition_h.has_value()) {

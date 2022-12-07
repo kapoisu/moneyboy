@@ -1,1 +1,5 @@
-target_sources(gameboy PRIVATE core.cpp mmu.cpp registers.cpp instruction.cpp)
+target_sources(gameboy PRIVATE arithmetic.cpp)
+target_sources(gameboy PRIVATE core.cpp)
+target_sources(gameboy PRIVATE instruction.cpp)
+target_sources(gameboy PRIVATE mmu.cpp)
+target_sources(gameboy PRIVATE registers.cpp)

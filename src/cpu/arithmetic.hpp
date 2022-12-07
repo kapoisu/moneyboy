@@ -52,7 +52,7 @@ namespace gameboy::cpu {
     }
 
     template<typename T>
-    AluResult<T> rlc(T a) requires std::unsigned_integral<T>
+    AluResult<T> rotate_left_c(T a) requires std::unsigned_integral<T>
     {
         // msb -> lsb
         // msb -> carry
@@ -65,7 +65,7 @@ namespace gameboy::cpu {
     }
 
     template<typename T>
-    AluResult<T> rrc(T a) requires std::unsigned_integral<T>
+    AluResult<T> rotate_right_c(T a) requires std::unsigned_integral<T>
     {
         // lsb -> msb
         // lsb -> carry
@@ -78,7 +78,7 @@ namespace gameboy::cpu {
     }
 
     template<typename T>
-    AluResult<T> rl(T a, bool carry) requires std::unsigned_integral<T>
+    AluResult<T> rotate_left(T a, bool carry) requires std::unsigned_integral<T>
     {
         // carry -> lsb
         // msb -> carry
@@ -91,7 +91,7 @@ namespace gameboy::cpu {
     }
 
     template<typename T>
-    AluResult<T> rr(T a, bool carry) requires std::unsigned_integral<T>
+    AluResult<T> rotate_right(T a, bool carry) requires std::unsigned_integral<T>
     {
         // carry -> msb
         // lsb -> carry
@@ -102,6 +102,43 @@ namespace gameboy::cpu {
             .carry {lsb != 0}
         };
     }
+
+    template<typename T>
+    AluResult<T> shift_left(T a) requires std::unsigned_integral<T>
+    {
+        const auto msb{a >> (sizeof(T) * 8 - 1)};
+
+        return {
+            .output{static_cast<T>(a << 1)},
+            .carry {msb != 0}
+        };
+    }
+
+    template<typename T>
+    AluResult<T> shift_right_l(T a) requires std::unsigned_integral<T>
+    {
+        const auto lsb{a & 1};
+
+        return {
+            .output{static_cast<T>(a >> 1)},
+            .carry {lsb != 0}
+        };
+    }
+
+    template<typename T>
+    AluResult<T> shift_right_a(T a) requires std::unsigned_integral<T>
+    {
+        const auto lsb{a & 1};
+        const auto msb_mask{(1 << (sizeof(T) * 8 - 1)) - 1};
+
+        return {
+            .output{static_cast<T>((a & msb_mask) | (a >> 1))},
+            .carry {lsb != 0}
+        };
+    }
+
+    AluResult<std::uint8_t> daa(std::uint8_t a, bool negation, bool half_carry, bool carry);
+    AluResult<std::uint8_t> swap(std::uint8_t a);
 }
 
 #endif

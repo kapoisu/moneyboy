@@ -2,6 +2,7 @@
 #define CPU_INSTURCTION_H
 
 #include <functional>
+#include <optional>
 #include <string>
 #include "arithmetic.hpp"
 #include "mmu.hpp"
@@ -10,7 +11,8 @@
 namespace gameboy::cpu {
     struct Instruction {
         struct SideEffect {
-            int cycle_adjustment;
+            int cycle_adjustment{};
+            std::optional<bool> ime_adjustment{};
         };
 
         using Operation = std::function<Instruction::SideEffect(int, Registers&, Mmu&)>;
@@ -40,14 +42,14 @@ namespace gameboy::cpu {
 
     struct Reg16High {
         Reg16Ref rr;
-        Reg8Getter getter{Reg16Ref::type::get_high};
-        Reg8Setter setter{Reg16Ref::type::set_high};
+        Reg8Getter getter{&Reg16Ref::type::get_high};
+        Reg8Setter setter{&Reg16Ref::type::set_high};
     };
 
     struct Reg16Low {
         Reg16Ref rr;
-        Reg8Getter getter{Reg16Ref::type::get_low};
-        Reg8Setter setter{Reg16Ref::type::set_low};
+        Reg8Getter getter{&Reg16Ref::type::get_low};
+        Reg8Setter setter{&Reg16Ref::type::set_low};
     };
 
     template<Flag Option, bool Status>
@@ -66,7 +68,39 @@ namespace gameboy::cpu {
         }
     };
 
-    // LD
+    // STOP
+    struct Stop {
+        Instruction::SideEffect operator()(int, Registers&, Mmu&)
+        {
+            return {};
+        }
+    };
+
+    // HALT
+    struct Halt {
+        Instruction::SideEffect operator()(int, Registers&, Mmu&)
+        {
+            return {};
+        }
+    };
+
+    // DI: disable interruption
+    struct Di {
+        Instruction::SideEffect operator()(int, Registers&, Mmu&)
+        {
+            return {.ime_adjustment{false}};
+        }
+    };
+
+    // EI: enable interruption
+    struct Ei {
+        Instruction::SideEffect operator()(int, Registers&, Mmu&)
+        {
+            return {.ime_adjustment{true}};
+        }
+    };
+
+    // LD: load
     template<Instruction::Operand Op1, Instruction::Operand Op2> struct Ld;
 
     // LD r, u8
@@ -1038,7 +1072,7 @@ namespace gameboy::cpu {
         }
     };
 
-    // CP
+    // CP: compare
     template<Instruction::Operand Op1, Instruction::Operand Op2> struct Cp;
 
     // CP A, r
@@ -1098,7 +1132,7 @@ namespace gameboy::cpu {
     struct Rlca {
         Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
         {
-            AluResult result{rlc(regs.af.get_high())};
+            AluResult result{rotate_left_c(regs.af.get_high())};
             adjust_flag(regs, {false, false, false, result.carry});
             return {};
         }
@@ -1108,7 +1142,7 @@ namespace gameboy::cpu {
     struct Rrca {
         Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
         {
-            AluResult result{rrc(regs.af.get_high())};
+            AluResult result{rotate_right_c(regs.af.get_high())};
             adjust_flag(regs, {false, false, false, result.carry});
             return {};
         }
@@ -1118,7 +1152,7 @@ namespace gameboy::cpu {
     struct Rla {
         Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
         {
-            AluResult result{rl(regs.af.get_high(), regs[Flag::carry])};
+            AluResult result{rotate_left(regs.af.get_high(), regs[Flag::carry])};
             adjust_flag(regs, {false, false, false, result.carry});
             return {};
         }
@@ -1128,8 +1162,47 @@ namespace gameboy::cpu {
     struct Rra {
         Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
         {
-            AluResult result{rr(regs.af.get_high(), regs[Flag::carry])};
+            AluResult result{rotate_right(regs.af.get_high(), regs[Flag::carry])};
             adjust_flag(regs, {false, false, false, result.carry});
+            return {};
+        }
+    };
+
+    // DAA: decimal adjustment after addition
+    struct Daa {
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
+        {
+            AluResult<std::uint8_t> result{daa(regs.af.get_high(), regs[Flag::negation], regs[Flag::half_carry], regs[Flag::carry])};
+            regs.af.set_high(result.output);
+            adjust_flag(regs, {result.output == 0, {}, false, result.carry});
+            return {};
+        }
+    };
+
+    // CPL: complement
+    struct Cpl {
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
+        {
+            regs.af.set_high(~regs.af.get_high());
+            adjust_flag(regs, {{}, true, true, {}});
+            return {};
+        }
+    };
+
+    // SCF: set carry flag
+    struct Scf {
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
+        {
+            adjust_flag(regs, {{}, false, false, true});
+            return {};
+        }
+    };
+
+    // CCF: complement carry flag
+    struct Ccf {
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
+        {
+            adjust_flag(regs, {{}, false, false, !regs[Flag::carry]});
             return {};
         }
     };
@@ -1236,7 +1309,7 @@ namespace gameboy::cpu {
     template<typename CheckCondition, Instruction::Operand Op1> struct Jp;
     Jp() -> Jp<void, Instruction::Operand::u16>;
     Jp(Reg16Ref) -> Jp<void, Instruction::Operand::reg16>;
-    template<typename T>
+    template<typename T> requires std::predicate<T, Registers&>
     Jp(T) -> Jp<T, Instruction::Operand::u16>;
     void jump(int cycle, Registers& regs, Mmu& mmu);
 
@@ -1334,6 +1407,15 @@ namespace gameboy::cpu {
         CheckCondition pred;
     };
 
+    // RETI
+    struct Reti {
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            ret(cycle, regs, mmu);
+            return {.ime_adjustment{true}};
+        }
+    };
+
     // CALL
     template<typename CheckCondition, Instruction::Operand Op1> struct Call;
     Call() -> Call<void, Instruction::Operand::u16>;
@@ -1380,7 +1462,7 @@ namespace gameboy::cpu {
         CheckCondition pred;
     };
 
-    // RST
+    // RST: restart
     template<int Address>
     struct Rst {
         Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
@@ -1401,6 +1483,495 @@ namespace gameboy::cpu {
                     return {};
             }
         }
+    };
+
+    // RLC: rotate left with carry
+    template<Instruction::Operand op1> struct Rlc;
+
+    // RLC r
+    template<>
+    struct Rlc<Instruction::Operand::reg8> {
+        Rlc(Reg16High reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
+        Rlc(Reg16Low reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
+        {
+            AluResult<std::uint8_t> result{rotate_left_c((rr.get().*read)())};
+            (rr.get().*write)(result.output);
+            adjust_flag(regs, {result.output == 0, false, false, result.carry});
+            return {};
+        }
+    private:
+        Reg16Ref rr;
+        Reg8Getter read;
+        Reg8Setter write;
+    };
+
+    // RLC (rr)
+    template<>
+    struct Rlc<Instruction::Operand::reg16_address> {
+        Rlc(Reg16Ref reg1) : rr{reg1} {}
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            static std::uint8_t temp{};
+            switch (cycle) {
+                case 1:
+                    temp = mmu.read_byte(rr.get());
+                    return {};
+                case 2: {
+                        AluResult<std::uint8_t> result{rotate_left_c(temp)};
+                        mmu.write_byte(rr.get(), result.output);
+                        adjust_flag(regs, {result.output == 0, false, false, result.carry});
+                    }
+                    return {};
+                default:
+                    return {};
+            }
+        }
+    private:
+        Reg16Ref rr;
+    };
+
+    // RRC: rotate right with carry
+    template<Instruction::Operand op1> struct Rrc;
+
+    // RRC r
+    template<>
+    struct Rrc<Instruction::Operand::reg8> {
+        Rrc(Reg16High reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
+        Rrc(Reg16Low reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
+        {
+            AluResult<std::uint8_t> result{rotate_right_c((rr.get().*read)())};
+            (rr.get().*write)(result.output);
+            adjust_flag(regs, {result.output == 0, false, false, result.carry});
+            return {};
+        }
+    private:
+        Reg16Ref rr;
+        Reg8Getter read;
+        Reg8Setter write;
+    };
+
+    // RRC (rr)
+    template<>
+    struct Rrc<Instruction::Operand::reg16_address> {
+        Rrc(Reg16Ref reg1) : rr{reg1} {}
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            static std::uint8_t temp{};
+            switch (cycle) {
+                case 1:
+                    temp = mmu.read_byte(rr.get());
+                    return {};
+                case 2: {
+                        AluResult<std::uint8_t> result{rotate_right_c(temp)};
+                        mmu.write_byte(rr.get(), result.output);
+                        adjust_flag(regs, {result.output == 0, false, false, result.carry});
+                    }
+                    return {};
+                default:
+                    return {};
+            }
+        }
+    private:
+        Reg16Ref rr;
+    };
+
+    // RL: rotate left
+    template<Instruction::Operand op1> struct Rl;
+
+    // RL r
+    template<>
+    struct Rl<Instruction::Operand::reg8> {
+        Rl(Reg16High reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
+        Rl(Reg16Low reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
+        {
+            AluResult<std::uint8_t> result{rotate_left((rr.get().*read)(), regs[Flag::carry])};
+            (rr.get().*write)(result.output);
+            adjust_flag(regs, {result.output == 0, false, false, result.carry});
+            return {};
+        }
+    private:
+        Reg16Ref rr;
+        Reg8Getter read;
+        Reg8Setter write;
+    };
+
+    // RL (rr)
+    template<>
+    struct Rl<Instruction::Operand::reg16_address> {
+        Rl(Reg16Ref reg1) : rr{reg1} {}
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            static std::uint8_t temp{};
+            switch (cycle) {
+                case 1:
+                    temp = mmu.read_byte(rr.get());
+                    return {};
+                case 2: {
+                        AluResult<std::uint8_t> result{rotate_left(temp, regs[Flag::carry])};
+                        mmu.write_byte(rr.get(), result.output);
+                        adjust_flag(regs, {result.output == 0, false, false, result.carry});
+                    }
+                    return {};
+                default:
+                    return {};
+            }
+        }
+    private:
+        Reg16Ref rr;
+    };
+
+    // RR: rotate right
+    template<Instruction::Operand op1> struct Rr;
+
+    // RR r
+    template<>
+    struct Rr<Instruction::Operand::reg8> {
+        Rr(Reg16High reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
+        Rr(Reg16Low reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
+        {
+            AluResult<std::uint8_t> result{rotate_right((rr.get().*read)(), regs[Flag::carry])};
+            (rr.get().*write)(result.output);
+            adjust_flag(regs, {result.output == 0, false, false, result.carry});
+            return {};
+        }
+    private:
+        Reg16Ref rr;
+        Reg8Getter read;
+        Reg8Setter write;
+    };
+
+    // RR (rr)
+    template<>
+    struct Rr<Instruction::Operand::reg16_address> {
+        Rr(Reg16Ref reg1) : rr{reg1} {}
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            static std::uint8_t temp{};
+            switch (cycle) {
+                case 1:
+                    temp = mmu.read_byte(rr.get());
+                    return {};
+                case 2: {
+                        AluResult<std::uint8_t> result{rotate_right(temp, regs[Flag::carry])};
+                        mmu.write_byte(rr.get(), result.output);
+                        adjust_flag(regs, {result.output == 0, false, false, result.carry});
+                    }
+                    return {};
+                default:
+                    return {};
+            }
+        }
+    private:
+        Reg16Ref rr;
+    };
+
+    // SLA: shift left arithmetic
+    template<Instruction::Operand op1> struct Sla;
+
+    // SLA r
+    template<>
+    struct Sla<Instruction::Operand::reg8> {
+        Sla(Reg16High reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
+        Sla(Reg16Low reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
+        {
+            AluResult<std::uint8_t> result{shift_left((rr.get().*read)())};
+            (rr.get().*write)(result.output);
+            adjust_flag(regs, {result.output == 0, false, false, result.carry});
+            return {};
+        }
+    private:
+        Reg16Ref rr;
+        Reg8Getter read;
+        Reg8Setter write;
+    };
+
+    // SLA (rr)
+    template<>
+    struct Sla<Instruction::Operand::reg16_address> {
+        Sla(Reg16Ref reg1) : rr{reg1} {}
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            static std::uint8_t temp{};
+            switch (cycle) {
+                case 1:
+                    temp = mmu.read_byte(rr.get());
+                    return {};
+                case 2: {
+                        AluResult<std::uint8_t> result{shift_left(temp)};
+                        mmu.write_byte(rr.get(), result.output);
+                        adjust_flag(regs, {result.output == 0, false, false, result.carry});
+                    }
+                    return {};
+                default:
+                    return {};
+            }
+        }
+    private:
+        Reg16Ref rr;
+    };
+
+    // SRA: shift right arithmetic
+    template<Instruction::Operand op1> struct Sra;
+
+    // SRA r
+    template<>
+    struct Sra<Instruction::Operand::reg8> {
+        Sra(Reg16High reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
+        Sra(Reg16Low reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
+        {
+            AluResult<std::uint8_t> result{shift_right_a((rr.get().*read)())};
+            (rr.get().*write)(result.output);
+            adjust_flag(regs, {result.output == 0, false, false, result.carry});
+            return {};
+        }
+    private:
+        Reg16Ref rr;
+        Reg8Getter read;
+        Reg8Setter write;
+    };
+
+    // SRA (rr)
+    template<>
+    struct Sra<Instruction::Operand::reg16_address> {
+        Sra(Reg16Ref reg1) : rr{reg1} {}
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            static std::uint8_t temp{};
+            switch (cycle) {
+                case 1:
+                    temp = mmu.read_byte(rr.get());
+                    return {};
+                case 2: {
+                        AluResult<std::uint8_t> result{shift_right_a(temp)};
+                        mmu.write_byte(rr.get(), result.output);
+                        adjust_flag(regs, {result.output == 0, false, false, result.carry});
+                    }
+                    return {};
+                default:
+                    return {};
+            }
+        }
+    private:
+        Reg16Ref rr;
+    };
+
+    // SWAP
+    template<Instruction::Operand op1> struct Swap;
+
+    // SWAP r
+    template<>
+    struct Swap<Instruction::Operand::reg8> {
+        Swap(Reg16High reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
+        Swap(Reg16Low reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
+        {
+            AluResult<std::uint8_t> result{swap((rr.get().*read)())};
+            (rr.get().*write)(result.output);
+            adjust_flag(regs, {result.output == 0, false, false, false});
+            return {};
+        }
+    private:
+        Reg16Ref rr;
+        Reg8Getter read;
+        Reg8Setter write;
+    };
+
+    // SWAP (rr)
+    template<>
+    struct Swap<Instruction::Operand::reg16_address> {
+        Swap(Reg16Ref reg1) : rr{reg1} {}
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            static std::uint8_t temp{};
+            switch (cycle) {
+                case 1:
+                    temp = mmu.read_byte(rr.get());
+                    return {};
+                case 2: {
+                        AluResult<std::uint8_t> result{swap(temp)};
+                        mmu.write_byte(rr.get(), result.output);
+                        adjust_flag(regs, {result.output == 0, false, false, false});
+                    }
+                    return {};
+                default:
+                    return {};
+            }
+        }
+    private:
+        Reg16Ref rr;
+    };
+
+    // SRL: shift right logical
+    template<Instruction::Operand op1> struct Srl;
+
+    // SRL r
+    template<>
+    struct Srl<Instruction::Operand::reg8> {
+        Srl(Reg16High reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
+        Srl(Reg16Low reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
+        {
+            AluResult<std::uint8_t> result{shift_right_l((rr.get().*read)())};
+            (rr.get().*write)(result.output);
+            adjust_flag(regs, {result.output == 0, false, false, result.carry});
+            return {};
+        }
+    private:
+        Reg16Ref rr;
+        Reg8Getter read;
+        Reg8Setter write;
+    };
+
+    // SRL (rr)
+    template<>
+    struct Srl<Instruction::Operand::reg16_address> {
+        Srl(Reg16Ref reg1) : rr{reg1} {}
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            static std::uint8_t temp{};
+            switch (cycle) {
+                case 1:
+                    temp = mmu.read_byte(rr.get());
+                    return {};
+                case 2: {
+                        AluResult<std::uint8_t> result{shift_right_l(temp)};
+                        mmu.write_byte(rr.get(), result.output);
+                        adjust_flag(regs, {result.output == 0, false, false, false});
+                    }
+                    return {};
+                default:
+                    return {};
+            }
+        }
+    private:
+        Reg16Ref rr;
+    };
+
+    // BIT: test the bit
+    template<int N, Instruction::Operand Op1> struct Bit;
+
+    template<int N>
+    struct Bit<N, Instruction::Operand::reg8> {
+        Bit(Reg16High reg1) : rr{reg1.rr}, read{reg1.getter} {}
+        Bit(Reg16Low reg1) : rr{reg1.rr}, read{reg1.getter} {}
+        Instruction::SideEffect operator()(int, Registers& regs, Mmu&)
+        {
+            auto result{static_cast<std::uint8_t>((rr.get().*read)() & (1 << N))};
+            adjust_flag(regs, {result == 0, false, true, {}});
+            return {};
+        }
+    private:
+        Reg16Ref rr;
+        Reg8Getter read;
+    };
+
+    template<int N>
+    struct Bit<N, Instruction::Operand::reg16_address> {
+        Bit(Reg16Ref reg1) : rr{reg1} {}
+        Instruction::SideEffect operator()(int cycle, Registers& regs, Mmu& mmu)
+        {
+            static std::uint8_t temp{};
+            switch (cycle) {
+                case 1: {
+                        temp = mmu.read_byte(rr.get());
+                        auto result{static_cast<std::uint8_t>(temp & (1 << N))};
+                        adjust_flag(regs, {result == 0, false, true, {}});
+                    }
+                    return {};
+                default:
+                    return {};
+            }
+        }
+    private:
+        Reg16Ref rr;
+    };
+
+    // RES: reset the bit
+    template<int N, Instruction::Operand Op1> struct Res;
+
+    template<int N>
+    struct Res<N, Instruction::Operand::reg8> {
+        Res(Reg16High reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
+        Res(Reg16Low reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
+        Instruction::SideEffect operator()(int, Registers&, Mmu&)
+        {
+            auto result{static_cast<std::uint8_t>((rr.get().*read)() & ~(1 << N))};
+            (rr.get().*write)(result);
+            return {};
+        }
+    private:
+        Reg16Ref rr;
+        Reg8Getter read;
+        Reg8Setter write;
+    };
+
+    template<int N>
+    struct Res<N, Instruction::Operand::reg16_address> {
+        Res(Reg16Ref reg1) : rr{reg1} {}
+        Instruction::SideEffect operator()(int cycle, Registers&, Mmu& mmu)
+        {
+            static std::uint8_t temp{};
+            switch (cycle) {
+                case 1:
+                    temp = mmu.read_byte(rr.get());
+                    temp &= ~(1 << N);
+                    return {};
+                case 2:
+                    mmu.write_byte(rr.get(), temp);
+                    return {};
+                default:
+                    return {};
+            }
+        }
+    private:
+        Reg16Ref rr;
+    };
+
+    // SET: set the bit
+    template<int N, Instruction::Operand Op1> struct Set;
+
+    template<int N>
+    struct Set<N, Instruction::Operand::reg8> {
+        Set(Reg16High reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
+        Set(Reg16Low reg1) : rr{reg1.rr}, read{reg1.getter}, write{reg1.setter} {}
+        Instruction::SideEffect operator()(int, Registers&, Mmu&)
+        {
+            auto result{static_cast<std::uint8_t>((rr.get().*read)() | (1 << N))};
+            (rr.get().*write)(result);
+            return {};
+        }
+    private:
+        Reg16Ref rr;
+        Reg8Getter read;
+        Reg8Setter write;
+    };
+
+    template<int N>
+    struct Set<N, Instruction::Operand::reg16_address> {
+        Set(Reg16Ref reg1) : rr{reg1} {}
+        Instruction::SideEffect operator()(int cycle, Registers&, Mmu& mmu)
+        {
+            static std::uint8_t temp{};
+            switch (cycle) {
+                case 1:
+                    temp = mmu.read_byte(rr.get());
+                    temp |= (1 << N);
+                    return {};
+                case 2:
+                    mmu.write_byte(rr.get(), temp);
+                    return {};
+                default:
+                    return {};
+            }
+        }
+    private:
+        Reg16Ref rr;
     };
 }
 
