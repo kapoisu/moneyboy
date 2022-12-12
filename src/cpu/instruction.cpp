@@ -1,7 +1,7 @@
 #include "instruction.hpp"
 
 namespace gameboy::cpu {
-    void relative_jump(int cycle, Registers& regs, Mmu& mmu)
+    void relative_jump(int cycle, Registers& regs, gameboy::io::Bus& mmu)
     {
         static std::int8_t offset{};
         switch (cycle) {
@@ -19,7 +19,7 @@ namespace gameboy::cpu {
         }
     }
 
-    void jump(int cycle, Registers& regs, Mmu& mmu)
+    void jump(int cycle, Registers& regs, gameboy::io::Bus& mmu)
     {
         static PairedRegister address{{}, std::uint8_t{}};
         switch (cycle) {
@@ -40,7 +40,7 @@ namespace gameboy::cpu {
         }
     }
 
-    void ret(int cycle, Registers& regs, Mmu& mmu)
+    void ret(int cycle, Registers& regs, gameboy::io::Bus& mmu)
     {
         switch (cycle) {
             case 0:
@@ -57,7 +57,7 @@ namespace gameboy::cpu {
         }
     }
 
-    void call(int cycle, Registers& regs, Mmu& mmu)
+    void call(int cycle, Registers& regs, gameboy::io::Bus& mmu)
     {
         static PairedRegister address{{}, std::uint8_t{}};
         switch (cycle) {

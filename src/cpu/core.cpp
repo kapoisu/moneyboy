@@ -1,8 +1,14 @@
 #include "core.hpp"
+#include <array>
 #include <chrono>
+#include <string>
 #include <iostream>
 
 namespace gameboy::cpu {
+    Core::Core(std::shared_ptr<gameboy::io::Bus> shared_bus) : p_bus{std::move(shared_bus)}
+    {
+    }
+
     void Core::tick()
     {
         static int m_cycle{0};
@@ -10,7 +16,7 @@ namespace gameboy::cpu {
         execute(instruction.operation, m_cycle++);
 
         if (m_cycle == instruction.duration) {
-            auto opcode{mmu.read_byte(regs.program_counter++)};
+            auto opcode{p_bus->read_byte(regs.program_counter++)};
             instruction = decode(opcode);
             m_cycle = 0;
         }
@@ -1043,7 +1049,7 @@ namespace gameboy::cpu {
             case 0xCB:
                 return {
                     .opcode{opcode}, .name{"PREFIX"}, .duration{1},
-                    .operation{[this] (int, Registers&, Mmu&) -> auto { return this->resolve_prefixed_instruction(); }}
+                    .operation{[this] (int, Registers&, gameboy::io::Bus&) -> auto { return this->resolve_prefixed_instruction(); }}
                 };
             case 0xCC:
                 return {
@@ -1255,7 +1261,7 @@ namespace gameboy::cpu {
 
     void Core::execute(const Instruction::Operation& func, int cycle)
     {
-        Instruction::SideEffect result{func(cycle, regs, mmu)};
+        Instruction::SideEffect result{func(cycle, regs, *p_bus)};
         instruction.duration += result.cycle_adjustment;
 
         if (result.ime_adjustment.has_value()) {
@@ -1265,7 +1271,7 @@ namespace gameboy::cpu {
 
     Instruction::SideEffect Core::resolve_prefixed_instruction()
     {
-        int opcode{mmu.read_byte(regs.program_counter++)};
+        int opcode{p_bus->read_byte(regs.program_counter++)};
 
         switch (opcode) {
             using enum Instruction::Operand;

@@ -1,13 +1,15 @@
 #ifndef CPU_CORE_H
 #define CPU_CORE_H
 
-#include "mmu.hpp"
+#include <memory>
+#include "io/bus.hpp"
 #include "registers.hpp"
 #include "instruction.hpp"
 
 namespace gameboy::cpu {
     class Core {
     public:
+        explicit Core(std::shared_ptr<gameboy::io::Bus> shared_bus);
         void tick();
         void test();
 
@@ -18,9 +20,9 @@ namespace gameboy::cpu {
         Instruction::SideEffect resolve_prefixed_instruction();
 
         Instruction instruction{};
-        Mmu mmu{"res/DMG_boot"};
         Registers regs{};
         bool interrupt_master_enable{};
+        std::shared_ptr<gameboy::io::Bus> p_bus;
     };
 }
 

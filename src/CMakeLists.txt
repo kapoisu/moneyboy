@@ -1,2 +1,7 @@
 add_executable(gameboy main.cpp)
 add_subdirectory(cpu)
+add_subdirectory(io)
+target_include_directories(gameboy PRIVATE cpu)
+target_include_directories(gameboy PRIVATE io)
+target_link_libraries(gameboy PRIVATE cpu)
+target_link_libraries(gameboy PRIVATE io)
