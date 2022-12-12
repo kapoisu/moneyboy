@@ -93,7 +93,7 @@ namespace gameboy::cpu {
             case 0x0D:
                 return {
                     .opcode{opcode}, .name{"DEC C"}, .duration{1},
-                    .operation{Inc<reg8>{Reg16Low{regs.bc}}}
+                    .operation{Dec<reg8>{Reg16Low{regs.bc}}}
                 };
             case 0x0E:
                 return {
@@ -173,7 +173,7 @@ namespace gameboy::cpu {
             case 0x1D:
                 return {
                     .opcode{opcode}, .name{"DEC E"}, .duration{1},
-                    .operation{Inc<reg8>{Reg16Low{regs.de}}}
+                    .operation{Dec<reg8>{Reg16Low{regs.de}}}
                 };
             case 0x1E:
                 return {
@@ -253,7 +253,7 @@ namespace gameboy::cpu {
             case 0x2D:
                 return {
                     .opcode{opcode}, .name{"DEC L"}, .duration{1},
-                    .operation{Inc<reg8>{Reg16Low{regs.hl}}}
+                    .operation{Dec<reg8>{Reg16Low{regs.hl}}}
                 };
             case 0x2E:
                 return {
