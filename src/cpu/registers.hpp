@@ -58,6 +58,11 @@ namespace gameboy::cpu {
         PairedRegister operator--(int);
         operator std::uint16_t() const;
     private:
+        struct Reg8Visitor {
+            std::uint8_t operator()(std::uint8_t value) const { return value; }
+            std::uint8_t operator()(FlagRegister value) const { return value.data(); }
+        };
+
         Low reg8_low;
         High reg8_high;
     };

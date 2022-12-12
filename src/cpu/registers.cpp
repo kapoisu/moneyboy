@@ -78,7 +78,7 @@ namespace gameboy::cpu {
 
     PairedRegister::operator std::uint16_t() const
     {
-        return (reg8_high << 8) | std::get<std::uint8_t>(reg8_low);
+        return (reg8_high << 8) | std::visit(Reg8Visitor{}, reg8_low);
     }
 
     bool Registers::operator[](Flag option) const
