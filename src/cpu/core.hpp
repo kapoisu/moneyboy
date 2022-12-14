@@ -2,7 +2,6 @@
 #define CPU_CORE_H
 
 #include <memory>
-#include "io/bus.hpp"
 #include "registers.hpp"
 #include "instruction.hpp"
 

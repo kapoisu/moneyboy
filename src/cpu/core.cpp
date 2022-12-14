@@ -1,4 +1,5 @@
 #include "core.hpp"
+#include "io/bus.hpp"
 #include <array>
 #include <chrono>
 #include <string>
@@ -1277,1282 +1278,1282 @@ namespace gameboy::cpu {
             using enum Instruction::Operand;
             case 0x00:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RLC B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RLC B"}, .duration{2},
                     .operation{Rlc<reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0x01:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RLC C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RLC C"}, .duration{2},
                     .operation{Rlc<reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0x02:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RLC D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RLC D"}, .duration{2},
                     .operation{Rlc<reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0x03:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RLC E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RLC E"}, .duration{2},
                     .operation{Rlc<reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0x04:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RLC H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RLC H"}, .duration{2},
                     .operation{Rlc<reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0x05:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RLC L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RLC L"}, .duration{2},
                     .operation{Rlc<reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0x06:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RLC (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"RLC (HL)"}, .duration{4},
                     .operation{Rlc<reg16_address>{regs.hl}}
                 }; break;
             case 0x07:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RLC A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RLC A"}, .duration{2},
                     .operation{Rlc<reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0x08:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RRC B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RRC B"}, .duration{2},
                     .operation{Rrc<reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0x09:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RRC C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RRC C"}, .duration{2},
                     .operation{Rrc<reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0x0A:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RRC D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RRC D"}, .duration{2},
                     .operation{Rrc<reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0x0B:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RRC E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RRC E"}, .duration{2},
                     .operation{Rrc<reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0x0C:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RRC H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RRC H"}, .duration{2},
                     .operation{Rrc<reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0x0D:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RRC L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RRC L"}, .duration{2},
                     .operation{Rrc<reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0x0E:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RRC (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"RRC (HL)"}, .duration{4},
                     .operation{Rrc<reg16_address>{regs.hl}}
                 }; break;
             case 0x0F:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RRC A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RRC A"}, .duration{2},
                     .operation{Rrc<reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0x10:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RL B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RL B"}, .duration{2},
                     .operation{Rl<reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0x11:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RL C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RL C"}, .duration{2},
                     .operation{Rl<reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0x12:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RL D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RL D"}, .duration{2},
                     .operation{Rl<reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0x13:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RL E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RL E"}, .duration{2},
                     .operation{Rl<reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0x14:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RL H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RL H"}, .duration{2},
                     .operation{Rl<reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0x15:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RL L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RL L"}, .duration{2},
                     .operation{Rl<reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0x16:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RL (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"RL (HL)"}, .duration{4},
                     .operation{Rl<reg16_address>{regs.hl}}
                 }; break;
             case 0x17:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RL A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RL A"}, .duration{2},
                     .operation{Rl<reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0x18:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RR B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RR B"}, .duration{2},
                     .operation{Rr<reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0x19:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RR C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RR C"}, .duration{2},
                     .operation{Rr<reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0x1A:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RR D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RR D"}, .duration{2},
                     .operation{Rr<reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0x1B:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RR E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RR E"}, .duration{2},
                     .operation{Rr<reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0x1C:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RR H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RR H"}, .duration{2},
                     .operation{Rr<reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0x1D:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RR L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RR L"}, .duration{2},
                     .operation{Rr<reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0x1E:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RR (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"RR (HL)"}, .duration{4},
                     .operation{Rr<reg16_address>{regs.hl}}
                 }; break;
             case 0x1F:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RR A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RR A"}, .duration{2},
                     .operation{Rr<reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0x20:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SLA B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SLA B"}, .duration{2},
                     .operation{Sla<reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0x21:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SLA C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SLA C"}, .duration{2},
                     .operation{Sla<reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0x22:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SLA D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SLA D"}, .duration{2},
                     .operation{Sla<reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0x23:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SLA E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SLA E"}, .duration{2},
                     .operation{Sla<reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0x24:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SLA H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SLA H"}, .duration{2},
                     .operation{Sla<reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0x25:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SLA L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SLA L"}, .duration{2},
                     .operation{Sla<reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0x26:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SLA (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"SLA (HL)"}, .duration{4},
                     .operation{Sla<reg16_address>{regs.hl}}
                 }; break;
             case 0x27:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SLA A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SLA A"}, .duration{2},
                     .operation{Sla<reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0x28:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SRA B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SRA B"}, .duration{2},
                     .operation{Sra<reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0x29:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SRA C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SRA C"}, .duration{2},
                     .operation{Sra<reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0x2A:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SRA D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SRA D"}, .duration{2},
                     .operation{Sra<reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0x2B:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SRA E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SRA E"}, .duration{2},
                     .operation{Sra<reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0x2C:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SRA H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SRA H"}, .duration{2},
                     .operation{Sra<reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0x2D:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SRA L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SRA L"}, .duration{2},
                     .operation{Sra<reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0x2E:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SRA (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"SRA (HL)"}, .duration{4},
                     .operation{Sra<reg16_address>{regs.hl}}
                 }; break;
             case 0x2F:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SRA A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SRA A"}, .duration{2},
                     .operation{Sra<reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0x30:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SWAP B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SWAP B"}, .duration{2},
                     .operation{Swap<reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0x31:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SWAP C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SWAP C"}, .duration{2},
                     .operation{Swap<reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0x32:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SWAP D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SWAP D"}, .duration{2},
                     .operation{Swap<reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0x33:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SWAP E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SWAP E"}, .duration{2},
                     .operation{Swap<reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0x34:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SWAP H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SWAP H"}, .duration{2},
                     .operation{Swap<reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0x35:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SWAP L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SWAP L"}, .duration{2},
                     .operation{Swap<reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0x36:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SWAP (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"SWAP (HL)"}, .duration{4},
                     .operation{Swap<reg16_address>{regs.hl}}
                 }; break;
             case 0x37:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SWAP A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SWAP A"}, .duration{2},
                     .operation{Swap<reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0x38:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SRL B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SRL B"}, .duration{2},
                     .operation{Srl<reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0x39:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SRL C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SRL C"}, .duration{2},
                     .operation{Srl<reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0x3A:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SRL D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SRL D"}, .duration{2},
                     .operation{Srl<reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0x3B:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SRL E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SRL E"}, .duration{2},
                     .operation{Srl<reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0x3C:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SRL H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SRL H"}, .duration{2},
                     .operation{Srl<reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0x3D:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SRL L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SRL L"}, .duration{2},
                     .operation{Srl<reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0x3E:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SRL (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"SRL (HL)"}, .duration{4},
                     .operation{Srl<reg16_address>{regs.hl}}
                 }; break;
             case 0x3F:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SRL A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SRL A"}, .duration{2},
                     .operation{Srl<reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0x40:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 0, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 0, B"}, .duration{2},
                     .operation{Bit<0, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0x41:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 0, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 0, C"}, .duration{2},
                     .operation{Bit<0, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0x42:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 0, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 0, D"}, .duration{2},
                     .operation{Bit<0, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0x43:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 0, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 0, E"}, .duration{2},
                     .operation{Bit<0, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0x44:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 0, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 0, H"}, .duration{2},
                     .operation{Bit<0, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0x45:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 0, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 0, L"}, .duration{2},
                     .operation{Bit<0, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0x46:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 0, (HL)"}, .duration{3},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 0, (HL)"}, .duration{3},
                     .operation{Bit<0, reg16_address>{regs.hl}}
                 }; break;
             case 0x47:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 0, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 0, A"}, .duration{2},
                     .operation{Bit<0, reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0x48:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 1, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 1, B"}, .duration{2},
                     .operation{Bit<1, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0x49:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 1, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 1, C"}, .duration{2},
                     .operation{Bit<1, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0x4A:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 1, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 1, D"}, .duration{2},
                     .operation{Bit<1, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0x4B:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 1, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 1, E"}, .duration{2},
                     .operation{Bit<1, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0x4C:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 1, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 1, H"}, .duration{2},
                     .operation{Bit<1, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0x4D:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 1, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 1, L"}, .duration{2},
                     .operation{Bit<1, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0x4E:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 1, (HL)"}, .duration{3},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 1, (HL)"}, .duration{3},
                     .operation{Bit<1, reg16_address>{regs.hl}}
                 }; break;
             case 0x4F:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 1, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 1, A"}, .duration{2},
                     .operation{Bit<1, reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0x50:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 2, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 2, B"}, .duration{2},
                     .operation{Bit<2, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0x51:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 2, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 2, C"}, .duration{2},
                     .operation{Bit<2, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0x52:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 2, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 2, D"}, .duration{2},
                     .operation{Bit<2, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0x53:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 2, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 2, E"}, .duration{2},
                     .operation{Bit<2, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0x54:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 2, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 2, H"}, .duration{2},
                     .operation{Bit<2, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0x55:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 2, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 2, L"}, .duration{2},
                     .operation{Bit<2, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0x56:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 2, (HL)"}, .duration{3},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 2, (HL)"}, .duration{3},
                     .operation{Bit<2, reg16_address>{regs.hl}}
                 }; break;
             case 0x57:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 2, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 2, A"}, .duration{2},
                     .operation{Bit<2, reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0x58:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 3, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 3, B"}, .duration{2},
                     .operation{Bit<3, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0x59:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 3, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 3, C"}, .duration{2},
                     .operation{Bit<3, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0x5A:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 3, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 3, D"}, .duration{2},
                     .operation{Bit<3, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0x5B:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 3, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 3, E"}, .duration{2},
                     .operation{Bit<3, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0x5C:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 3, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 3, H"}, .duration{2},
                     .operation{Bit<3, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0x5D:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 3, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 3, L"}, .duration{2},
                     .operation{Bit<3, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0x5E:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 3, (HL)"}, .duration{3},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 3, (HL)"}, .duration{3},
                     .operation{Bit<3, reg16_address>{regs.hl}}
                 }; break;
             case 0x5F:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 3, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 3, A"}, .duration{2},
                     .operation{Bit<3, reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0x60:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 4, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 4, B"}, .duration{2},
                     .operation{Bit<4, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0x61:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 4, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 4, C"}, .duration{2},
                     .operation{Bit<4, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0x62:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 4, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 4, D"}, .duration{2},
                     .operation{Bit<4, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0x63:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 4, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 4, E"}, .duration{2},
                     .operation{Bit<4, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0x64:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 4, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 4, H"}, .duration{2},
                     .operation{Bit<4, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0x65:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 4, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 4, L"}, .duration{2},
                     .operation{Bit<4, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0x66:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 4, (HL)"}, .duration{3},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 4, (HL)"}, .duration{3},
                     .operation{Bit<4, reg16_address>{regs.hl}}
                 }; break;
             case 0x67:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 4, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 4, A"}, .duration{2},
                     .operation{Bit<4, reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0x68:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 5, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 5, B"}, .duration{2},
                     .operation{Bit<5, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0x69:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 5, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 5, C"}, .duration{2},
                     .operation{Bit<5, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0x6A:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 5, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 5, D"}, .duration{2},
                     .operation{Bit<5, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0x6B:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 5, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 5, E"}, .duration{2},
                     .operation{Bit<5, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0x6C:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 5, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 5, H"}, .duration{2},
                     .operation{Bit<5, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0x6D:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 5, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 5, L"}, .duration{2},
                     .operation{Bit<5, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0x6E:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 5, (HL)"}, .duration{3},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 5, (HL)"}, .duration{3},
                     .operation{Bit<5, reg16_address>{regs.hl}}
                 }; break;
             case 0x6F:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 5, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 5, A"}, .duration{2},
                     .operation{Bit<5, reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0x70:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 6, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 6, B"}, .duration{2},
                     .operation{Bit<6, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0x71:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 6, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 6, C"}, .duration{2},
                     .operation{Bit<6, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0x72:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 6, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 6, D"}, .duration{2},
                     .operation{Bit<6, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0x73:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 6, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 6, E"}, .duration{2},
                     .operation{Bit<6, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0x74:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 6, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 6, H"}, .duration{2},
                     .operation{Bit<6, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0x75:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 6, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 6, L"}, .duration{2},
                     .operation{Bit<6, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0x76:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 6, (HL)"}, .duration{3},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 6, (HL)"}, .duration{3},
                     .operation{Bit<6, reg16_address>{regs.hl}}
                 }; break;
             case 0x77:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 6, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 6, A"}, .duration{2},
                     .operation{Bit<6, reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0x78:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 7, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 7, B"}, .duration{2},
                     .operation{Bit<7, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0x79:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 7, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 7, C"}, .duration{2},
                     .operation{Bit<7, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0x7A:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 7, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 7, D"}, .duration{2},
                     .operation{Bit<7, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0x7B:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 7, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 7, E"}, .duration{2},
                     .operation{Bit<7, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0x7C:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 7, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 7, H"}, .duration{2},
                     .operation{Bit<7, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0x7D:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 7, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 7, L"}, .duration{2},
                     .operation{Bit<7, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0x7E:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 7, (HL)"}, .duration{3},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 7, (HL)"}, .duration{3},
                     .operation{Bit<7, reg16_address>{regs.hl}}
                 }; break;
             case 0x7F:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"BIT 7, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"BIT 7, A"}, .duration{2},
                     .operation{Bit<7, reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0x80:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 0, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 0, B"}, .duration{2},
                     .operation{Res<0, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0x81:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 0, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 0, C"}, .duration{2},
                     .operation{Res<0, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0x82:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 0, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 0, D"}, .duration{2},
                     .operation{Res<0, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0x83:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 0, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 0, E"}, .duration{2},
                     .operation{Res<0, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0x84:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 0, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 0, H"}, .duration{2},
                     .operation{Res<0, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0x85:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 0, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 0, L"}, .duration{2},
                     .operation{Res<0, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0x86:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 0, (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"RES 0, (HL)"}, .duration{4},
                     .operation{Res<0, reg16_address>{regs.hl}}
                 }; break;
             case 0x87:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 0, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 0, A"}, .duration{2},
                     .operation{Res<0, reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0x88:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 1, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 1, B"}, .duration{2},
                     .operation{Res<1, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0x89:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 1, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 1, C"}, .duration{2},
                     .operation{Res<1, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0x8A:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 1, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 1, D"}, .duration{2},
                     .operation{Res<1, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0x8B:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 1, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 1, E"}, .duration{2},
                     .operation{Res<1, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0x8C:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 1, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 1, H"}, .duration{2},
                     .operation{Res<1, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0x8D:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 1, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 1, L"}, .duration{2},
                     .operation{Res<1, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0x8E:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 1, (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"RES 1, (HL)"}, .duration{4},
                     .operation{Res<1, reg16_address>{regs.hl}}
                 }; break;
             case 0x8F:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 1, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 1, A"}, .duration{2},
                     .operation{Res<1, reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0x90:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 2, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 2, B"}, .duration{2},
                     .operation{Res<2, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0x91:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 2, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 2, C"}, .duration{2},
                     .operation{Res<2, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0x92:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 2, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 2, D"}, .duration{2},
                     .operation{Res<2, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0x93:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 2, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 2, E"}, .duration{2},
                     .operation{Res<2, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0x94:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 2, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 2, H"}, .duration{2},
                     .operation{Res<2, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0x95:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 2, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 2, L"}, .duration{2},
                     .operation{Res<2, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0x96:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 2, (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"RES 2, (HL)"}, .duration{4},
                     .operation{Res<2, reg16_address>{regs.hl}}
                 }; break;
             case 0x97:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 2, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 2, A"}, .duration{2},
                     .operation{Res<2, reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0x98:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 3, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 3, B"}, .duration{2},
                     .operation{Res<3, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0x99:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 3, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 3, C"}, .duration{2},
                     .operation{Res<3, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0x9A:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 3, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 3, D"}, .duration{2},
                     .operation{Res<3, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0x9B:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 3, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 3, E"}, .duration{2},
                     .operation{Res<3, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0x9C:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 3, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 3, H"}, .duration{2},
                     .operation{Res<3, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0x9D:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 3, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 3, L"}, .duration{2},
                     .operation{Res<3, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0x9E:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 3, (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"RES 3, (HL)"}, .duration{4},
                     .operation{Res<3, reg16_address>{regs.hl}}
                 }; break;
             case 0x9F:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 3, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 3, A"}, .duration{2},
                     .operation{Res<3, reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0xA0:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 4, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 4, B"}, .duration{2},
                     .operation{Res<4, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0xA1:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 4, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 4, C"}, .duration{2},
                     .operation{Res<4, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0xA2:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 4, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 4, D"}, .duration{2},
                     .operation{Res<4, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0xA3:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 4, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 4, E"}, .duration{2},
                     .operation{Res<4, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0xA4:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 4, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 4, H"}, .duration{2},
                     .operation{Res<4, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0xA5:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 4, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 4, L"}, .duration{2},
                     .operation{Res<4, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0xA6:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 4, (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"RES 4, (HL)"}, .duration{4},
                     .operation{Res<4, reg16_address>{regs.hl}}
                 }; break;
             case 0xA7:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 4, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 4, A"}, .duration{2},
                     .operation{Res<4, reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0xA8:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 5, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 5, B"}, .duration{2},
                     .operation{Res<5, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0xA9:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 5, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 5, C"}, .duration{2},
                     .operation{Res<5, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0xAA:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 5, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 5, D"}, .duration{2},
                     .operation{Res<5, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0xAB:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 5, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 5, E"}, .duration{2},
                     .operation{Res<5, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0xAC:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 5, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 5, H"}, .duration{2},
                     .operation{Res<5, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0xAD:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 5, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 5, L"}, .duration{2},
                     .operation{Res<5, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0xAE:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 5, (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"RES 5, (HL)"}, .duration{4},
                     .operation{Res<5, reg16_address>{regs.hl}}
                 }; break;
             case 0xAF:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 5, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 5, A"}, .duration{2},
                     .operation{Res<5, reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0xB0:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 6, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 6, B"}, .duration{2},
                     .operation{Res<6, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0xB1:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 6, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 6, C"}, .duration{2},
                     .operation{Res<6, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0xB2:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 6, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 6, D"}, .duration{2},
                     .operation{Res<6, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0xB3:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 6, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 6, E"}, .duration{2},
                     .operation{Res<6, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0xB4:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 6, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 6, H"}, .duration{2},
                     .operation{Res<6, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0xB5:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 6, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 6, L"}, .duration{2},
                     .operation{Res<6, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0xB6:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 6, (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"RES 6, (HL)"}, .duration{4},
                     .operation{Res<6, reg16_address>{regs.hl}}
                 }; break;
             case 0xB7:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 6, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 6, A"}, .duration{2},
                     .operation{Res<6, reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0xB8:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 7, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 7, B"}, .duration{2},
                     .operation{Res<7, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0xB9:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 7, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 7, C"}, .duration{2},
                     .operation{Res<7, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0xBA:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 7, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 7, D"}, .duration{2},
                     .operation{Res<7, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0xBB:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 7, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 7, E"}, .duration{2},
                     .operation{Res<7, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0xBC:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 7, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 7, H"}, .duration{2},
                     .operation{Res<7, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0xBD:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 7, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 7, L"}, .duration{2},
                     .operation{Res<7, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0xBE:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 7, (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"RES 7, (HL)"}, .duration{4},
                     .operation{Res<7, reg16_address>{regs.hl}}
                 }; break;
             case 0xBF:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"RES 7, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"RES 7, A"}, .duration{2},
                     .operation{Res<7, reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0xC0:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 0, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 0, B"}, .duration{2},
                     .operation{Set<0, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0xC1:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 0, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 0, C"}, .duration{2},
                     .operation{Set<0, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0xC2:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 0, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 0, D"}, .duration{2},
                     .operation{Set<0, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0xC3:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 0, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 0, E"}, .duration{2},
                     .operation{Set<0, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0xC4:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 0, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 0, H"}, .duration{2},
                     .operation{Set<0, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0xC5:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 0, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 0, L"}, .duration{2},
                     .operation{Set<0, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0xC6:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 0, (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"SET 0, (HL)"}, .duration{4},
                     .operation{Set<0, reg16_address>{regs.hl}}
                 }; break;
             case 0xC7:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 0, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 0, A"}, .duration{2},
                     .operation{Set<0, reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0xC8:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 1, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 1, B"}, .duration{2},
                     .operation{Set<1, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0xC9:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 1, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 1, C"}, .duration{2},
                     .operation{Set<1, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0xCA:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 1, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 1, D"}, .duration{2},
                     .operation{Set<1, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0xCB:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 1, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 1, E"}, .duration{2},
                     .operation{Set<1, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0xCC:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 1, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 1, H"}, .duration{2},
                     .operation{Set<1, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0xCD:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 1, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 1, L"}, .duration{2},
                     .operation{Set<1, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0xCE:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 1, (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"SET 1, (HL)"}, .duration{4},
                     .operation{Set<1, reg16_address>{regs.hl}}
                 }; break;
             case 0xCF:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 1, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 1, A"}, .duration{2},
                     .operation{Set<1, reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0xD0:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 2, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 2, B"}, .duration{2},
                     .operation{Set<2, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0xD1:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 2, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 2, C"}, .duration{2},
                     .operation{Set<2, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0xD2:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 2, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 2, D"}, .duration{2},
                     .operation{Set<2, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0xD3:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 2, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 2, E"}, .duration{2},
                     .operation{Set<2, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0xD4:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 2, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 2, H"}, .duration{2},
                     .operation{Set<2, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0xD5:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 2, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 2, L"}, .duration{2},
                     .operation{Set<2, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0xD6:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 2, (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"SET 2, (HL)"}, .duration{4},
                     .operation{Set<2, reg16_address>{regs.hl}}
                 }; break;
             case 0xD7:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 2, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 2, A"}, .duration{2},
                     .operation{Set<2, reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0xD8:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 3, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 3, B"}, .duration{2},
                     .operation{Set<3, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0xD9:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 3, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 3, C"}, .duration{2},
                     .operation{Set<3, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0xDA:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 3, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 3, D"}, .duration{2},
                     .operation{Set<3, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0xDB:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 3, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 3, E"}, .duration{2},
                     .operation{Set<3, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0xDC:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 3, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 3, H"}, .duration{2},
                     .operation{Set<3, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0xDD:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 3, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 3, L"}, .duration{2},
                     .operation{Set<3, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0xDE:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 3, (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"SET 3, (HL)"}, .duration{4},
                     .operation{Set<3, reg16_address>{regs.hl}}
                 }; break;
             case 0xDF:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 3, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 3, A"}, .duration{2},
                     .operation{Set<3, reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0xE0:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 4, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 4, B"}, .duration{2},
                     .operation{Set<4, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0xE1:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 4, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 4, C"}, .duration{2},
                     .operation{Set<4, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0xE2:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 4, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 4, D"}, .duration{2},
                     .operation{Set<4, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0xE3:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 4, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 4, E"}, .duration{2},
                     .operation{Set<4, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0xE4:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 4, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 4, H"}, .duration{2},
                     .operation{Set<4, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0xE5:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 4, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 4, L"}, .duration{2},
                     .operation{Set<4, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0xE6:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 4, (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"SET 4, (HL)"}, .duration{4},
                     .operation{Set<4, reg16_address>{regs.hl}}
                 }; break;
             case 0xE7:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 4, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 4, A"}, .duration{2},
                     .operation{Set<4, reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0xE8:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 5, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 5, B"}, .duration{2},
                     .operation{Set<5, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0xE9:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 5, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 5, C"}, .duration{2},
                     .operation{Set<5, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0xEA:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 5, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 5, D"}, .duration{2},
                     .operation{Set<5, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0xEB:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 5, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 5, E"}, .duration{2},
                     .operation{Set<5, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0xEC:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 5, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 5, H"}, .duration{2},
                     .operation{Set<5, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0xED:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 5, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 5, L"}, .duration{2},
                     .operation{Set<5, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0xEE:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 5, (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"SET 5, (HL)"}, .duration{4},
                     .operation{Set<5, reg16_address>{regs.hl}}
                 }; break;
             case 0xEF:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 5, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 5, A"}, .duration{2},
                     .operation{Set<5, reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0xF0:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 6, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 6, B"}, .duration{2},
                     .operation{Set<6, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0xF1:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 6, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 6, C"}, .duration{2},
                     .operation{Set<6, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0xF2:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 6, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 6, D"}, .duration{2},
                     .operation{Set<6, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0xF3:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 6, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 6, E"}, .duration{2},
                     .operation{Set<6, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0xF4:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 6, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 6, H"}, .duration{2},
                     .operation{Set<6, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0xF5:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 6, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 6, L"}, .duration{2},
                     .operation{Set<6, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0xF6:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 6, (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"SET 6, (HL)"}, .duration{4},
                     .operation{Set<6, reg16_address>{regs.hl}}
                 }; break;
             case 0xF7:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 6, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 6, A"}, .duration{2},
                     .operation{Set<6, reg8>{Reg16High{regs.af}}}
                 }; break;
             case 0xF8:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 7, B"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 7, B"}, .duration{2},
                     .operation{Set<7, reg8>{Reg16High{regs.bc}}}
                 }; break;
             case 0xF9:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 7, C"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 7, C"}, .duration{2},
                     .operation{Set<7, reg8>{Reg16Low{regs.bc}}}
                 }; break;
             case 0xFA:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 7, D"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 7, D"}, .duration{2},
                     .operation{Set<7, reg8>{Reg16High{regs.de}}}
                 }; break;
             case 0xFB:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 7, E"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 7, E"}, .duration{2},
                     .operation{Set<7, reg8>{Reg16Low{regs.de}}}
                 }; break;
             case 0xFC:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 7, H"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 7, H"}, .duration{2},
                     .operation{Set<7, reg8>{Reg16High{regs.hl}}}
                 }; break;
             case 0xFD:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 7, L"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 7, L"}, .duration{2},
                     .operation{Set<7, reg8>{Reg16Low{regs.hl}}}
                 }; break;
             case 0xFE:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 7, (HL)"}, .duration{4},
+                    .opcode{0xCB00 + opcode}, .name{"SET 7, (HL)"}, .duration{4},
                     .operation{Set<7, reg16_address>{regs.hl}}
                 }; break;
             case 0xFF:
                 instruction = {
-                    .opcode{0xCB + opcode}, .name{"SET 7, A"}, .duration{2},
+                    .opcode{0xCB00 + opcode}, .name{"SET 7, A"}, .duration{2},
                     .operation{Set<7, reg8>{Reg16High{regs.af}}}
                 }; break;
             default:
