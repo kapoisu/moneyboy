@@ -1,6 +1,0 @@
-add_library(cpu STATIC)
-target_include_directories(cpu PUBLIC ${CMAKE_SOURCE_DIR}/src)
-target_sources(cpu PRIVATE arithmetic.cpp)
-target_sources(cpu PRIVATE core.cpp)
-target_sources(cpu PRIVATE instruction.cpp)
-target_sources(cpu PRIVATE registers.cpp)

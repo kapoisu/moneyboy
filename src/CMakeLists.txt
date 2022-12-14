@@ -1,7 +1,17 @@
 add_executable(gameboy main.cpp)
-add_subdirectory(cpu)
-add_subdirectory(io)
-target_include_directories(gameboy PRIVATE cpu)
-target_include_directories(gameboy PRIVATE io)
-target_link_libraries(gameboy PRIVATE cpu)
-target_link_libraries(gameboy PRIVATE io)
+
+target_sources(gameboy PRIVATE cpu/arithmetic.cpp)
+target_sources(gameboy PRIVATE cpu/core.cpp)
+target_sources(gameboy PRIVATE cpu/instruction.cpp)
+target_sources(gameboy PRIVATE cpu/registers.cpp)
+
+target_sources(gameboy PRIVATE io/bankable.cpp)
+target_sources(gameboy PRIVATE io/bus.cpp)
+target_sources(gameboy PRIVATE io/cartridge.cpp)
+
+target_include_directories(gameboy PRIVATE ${CMAKE_SOURCE_DIR}/src)
+
+target_include_directories(gameboy PRIVATE ${SDL2_INCLUDE_DIR})
+target_link_directories(gameboy PRIVATE ${SDL2_BINDIR})
+target_link_libraries(gameboy PRIVATE ${SDL2_LIBRARIES})
+target_link_options(gameboy PRIVATE -mconsole)
