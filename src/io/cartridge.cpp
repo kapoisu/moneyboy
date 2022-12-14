@@ -60,12 +60,12 @@ namespace gameboy::io {
         }
     }
 
-    std::unique_ptr<Bankable> create_mbc(const Cartridge& cartridge)
-    {
-        switch (cartridge.get_type()) {
-            using enum Cartridge::Type;
-            default:
-                return std::make_unique<Mbc>();
-        }
-    }
+    // std::unique_ptr<Bankable> create_mbc(const Cartridge& cartridge)
+    // {
+    //     switch (cartridge.get_type()) {
+    //         using enum Cartridge::Type;
+    //         default:
+    //             return std::make_unique<Mbc>();
+    //     }
+    // }
 }
