@@ -1,4 +1,5 @@
 add_executable(gameboy main.cpp)
+target_sources(gameboy PRIVATE emulator.cpp)
 
 target_sources(gameboy PRIVATE cpu/arithmetic.cpp)
 target_sources(gameboy PRIVATE cpu/core.cpp)
