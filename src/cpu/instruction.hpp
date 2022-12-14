@@ -33,7 +33,7 @@ namespace gameboy::cpu {
         int opcode{};
         std::string name{};
         int duration{1}; // m-cycle
-        Operation operation{[](int, Registers&, gameboy::io::Bus&) -> SideEffect { return {};}};
+        Operation operation{[](int, Registers&, gameboy::io::Bus&) -> SideEffect { return {}; }};
     };
 
     using Reg16Ref = std::reference_wrapper<PairedRegister>;
@@ -432,7 +432,7 @@ namespace gameboy::cpu {
         {
             switch (cycle) {
                 case 0:
-                    mmu.write_byte(rr.get()--, regs.af.get_high());
+                    mmu.write_byte(rr.get()++, regs.af.get_high());
                     return {};
                 default:
                     return {};
@@ -1133,6 +1133,7 @@ namespace gameboy::cpu {
         Instruction::SideEffect operator()(int, Registers& regs, gameboy::io::Bus&)
         {
             AluResult result{rotate_left_c(regs.af.get_high())};
+            regs.af.set_high(result.output);
             adjust_flag(regs, {false, false, false, result.carry});
             return {};
         }
@@ -1143,6 +1144,7 @@ namespace gameboy::cpu {
         Instruction::SideEffect operator()(int, Registers& regs, gameboy::io::Bus&)
         {
             AluResult result{rotate_right_c(regs.af.get_high())};
+            regs.af.set_high(result.output);
             adjust_flag(regs, {false, false, false, result.carry});
             return {};
         }
@@ -1153,6 +1155,7 @@ namespace gameboy::cpu {
         Instruction::SideEffect operator()(int, Registers& regs, gameboy::io::Bus&)
         {
             AluResult result{rotate_left(regs.af.get_high(), regs[Flag::carry])};
+            regs.af.set_high(result.output);
             adjust_flag(regs, {false, false, false, result.carry});
             return {};
         }
@@ -1163,6 +1166,7 @@ namespace gameboy::cpu {
         Instruction::SideEffect operator()(int, Registers& regs, gameboy::io::Bus&)
         {
             AluResult result{rotate_right(regs.af.get_high(), regs[Flag::carry])};
+            regs.af.set_high(result.output);
             adjust_flag(regs, {false, false, false, result.carry});
             return {};
         }
