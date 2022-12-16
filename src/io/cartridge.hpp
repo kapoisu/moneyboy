@@ -13,16 +13,13 @@ namespace gameboy::io {
     public:
         Cartridge(const std::string& file_name);
 
-        enum class Type {
-            none = 0x00
-        };
-
         std::uint8_t read(int address) const override;
         void write(int address, std::uint8_t value) override;
-        std::vector<std::uint8_t> get_header() const;
+        friend class Mbc;
     private:
         std::vector<std::uint8_t> switchable_rom{};
         std::vector<std::vector<std::uint8_t>> banks{{}, {}};
+        std::unique_ptr<Bankable> p_mbc{};
     };
 
     class BootLoader : public Bankable {
@@ -30,12 +27,12 @@ namespace gameboy::io {
         BootLoader(const std::string& file_name);
 
         std::uint8_t read(int address) const override;
-        void load_cartridge_header(const Cartridge& cartridge);
+        void load_cartridge(std::unique_ptr<Bankable> ptr);
     private:
         void write(int address, std::uint8_t value) override;
 
         std::array<std::uint8_t, 0x100> boot_rom{};
-        std::array<std::uint8_t, 0x50> cartridge_header{};
+        std::unique_ptr<Bankable> p_cartridge{};
     };
 }
 

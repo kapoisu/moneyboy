@@ -1,5 +1,6 @@
 
 #include "cartridge.hpp"
+#include "mbc.hpp"
 #include <algorithm>
 #include <cassert>
 #include <cstring>
@@ -18,18 +19,16 @@ namespace gameboy::io {
         std::copy_n(std::istreambuf_iterator<char>(file), bank_size, banks[0].begin());
         std::copy_n(std::istreambuf_iterator<char>(file), bank_size, banks[1].begin());
         std::swap(switchable_rom, banks[1]);
-    }
 
-    std::vector<std::uint8_t> Cartridge::get_header() const
-    {
-        constexpr static int header_begin{0x0100};
-        constexpr static int header_end{0x0150};
-        return {banks[0].cbegin() + header_begin, banks[0].cbegin() + header_end};
+        p_mbc = create_mbc(*this);
     }
 
     std::uint8_t Cartridge::read(int address) const
     {
-        if (address < 0x4000) {
+        if (p_mbc) {
+            return p_mbc->read(address);
+        }
+        else if (address < 0x4000) {
             return banks[0][address];
         }
         else {
@@ -39,7 +38,12 @@ namespace gameboy::io {
 
     void Cartridge::write(int address, std::uint8_t value)
     {
-        //throw std::runtime_error{"You shouldn't modify the boot ROM."};
+        if (p_mbc) {
+            p_mbc->write(address, value);
+        }
+        else {
+            throw std::runtime_error{"You shouldn't modify the cartridge ROM."};
+        }
     }
 
     BootLoader::BootLoader(const std::string& file_name)
@@ -48,8 +52,6 @@ namespace gameboy::io {
 
         const auto end{std::copy(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>(), boot_rom.begin())};
         assert(std::distance(boot_rom.begin(), end) >= 256);
-
-        cartridge_header.fill(0xFF);
     }
 
     std::uint8_t BootLoader::read(int address) const
@@ -58,7 +60,7 @@ namespace gameboy::io {
             return boot_rom[address];
         }
         else {
-            return cartridge_header[address - 0x0100];
+            return p_cartridge ? p_cartridge->read(address) : 0xFF;
         }
     }
 
@@ -67,11 +69,8 @@ namespace gameboy::io {
         throw std::runtime_error{"You shouldn't modify the boot ROM."};
     }
 
-    void BootLoader::load_cartridge_header(const Cartridge& cartridge)
+    void BootLoader::load_cartridge(std::unique_ptr<Bankable> ptr)
     {
-        auto header{cartridge.get_header()};
-        for (auto i{0}; i < std::ssize(header); ++i) {
-            cartridge_header[i] = header[i];
-        }
+        p_cartridge = std::move(ptr);
     }
 }

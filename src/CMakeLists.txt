@@ -9,6 +9,7 @@ target_sources(gameboy PRIVATE cpu/registers.cpp)
 target_sources(gameboy PRIVATE io/bankable.cpp)
 target_sources(gameboy PRIVATE io/bus.cpp)
 target_sources(gameboy PRIVATE io/cartridge.cpp)
+target_sources(gameboy PRIVATE io/mbc.cpp)
 
 target_include_directories(gameboy PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
