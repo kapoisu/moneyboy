@@ -1,5 +1,4 @@
 #include "core.hpp"
-#include "io/bus.hpp"
 #include <array>
 #include <chrono>
 #include <string>

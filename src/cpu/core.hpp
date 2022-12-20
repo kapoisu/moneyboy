@@ -2,6 +2,7 @@
 #define CPU_CORE_H
 
 #include <memory>
+#include "io/bus.hpp"
 #include "registers.hpp"
 #include "instruction.hpp"
 
@@ -12,7 +13,6 @@ namespace gameboy::cpu {
         void tick();
         void test();
 
-        static constexpr double frequency{1.048576e6};
     private:
         Instruction decode(int opcode);
         void execute(const Instruction::Operation& func, int cycle);
