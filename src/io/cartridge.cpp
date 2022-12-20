@@ -64,13 +64,50 @@ namespace gameboy::io {
         }
     }
 
-    void BootLoader::write(int address, std::uint8_t value)
-    {
-        throw std::runtime_error{"You shouldn't modify the boot ROM."};
-    }
-
-    void BootLoader::load_cartridge(std::unique_ptr<Bankable> ptr)
+    void BootLoader::capture_cartridge(std::unique_ptr<Cartridge> ptr)
     {
         p_cartridge = std::move(ptr);
+    }
+
+    std::unique_ptr<Cartridge> BootLoader::release_cartridge()
+    {
+        return std::move(p_cartridge);
+    }
+
+    CartridgeBanking::CartridgeBanking(std::unique_ptr<BootLoader> ptr)
+        : p_loader{std::move(ptr)}, p_reader{*p_loader}
+    {
+    }
+
+    CartridgeBanking::CartridgeBanking(std::unique_ptr<Cartridge> ptr)
+        : p_cartridge{std::move(ptr)}, p_reader{*p_cartridge}, p_writer{*p_cartridge}
+    {
+    }
+
+    std::uint8_t CartridgeBanking::read(int address) const
+    {
+        return p_reader.get().read(address);
+    }
+
+    void CartridgeBanking::write(int address, std::uint8_t value)
+    {
+        p_writer->get().write(address, value);
+    }
+
+    void CartridgeBanking::disable_boot_rom()
+    {
+        if (!p_loader) {
+                return;
+        }
+
+        auto ptr{p_loader->release_cartridge()};
+
+        if (!ptr) {
+            return;
+        }
+
+        p_cartridge = std::move(ptr);
+        p_reader = *p_cartridge;
+        p_writer = *p_cartridge;
     }
 }
