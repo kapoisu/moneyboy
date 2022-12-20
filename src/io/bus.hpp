@@ -8,19 +8,23 @@
 #include <string>
 #include <vector>
 #include "bankable.hpp"
+#include "cartridge.hpp"
+#include "vram.hpp"
 
 namespace gameboy::io {
     class Bus {
     public:
-        Bus(std::unique_ptr<Bankable> loader);
+        Bus(CartridgeBanking bankable);
 
         std::uint8_t read_byte(int address) const;
         void write_byte(int address, std::uint8_t value);
     private:
-        std::unique_ptr<Bankable> cartridge_area;
-        std::array<std::uint8_t, 0x4000> static_rom{};
-        std::vector<std::uint8_t> switchable_rom{};
+        CartridgeBanking cartridge_area;
         std::array<std::uint8_t, 65536> ram{};
+        Vram vram{}; // 0x8000-0x9FFF
+        // std::unique_ptr<Bankable> sram{}; // 0xA000-0xBFFF
+        // std::unique_ptr<Bankable> wram{}; // 0xC000-0xDFFF
+        std::array<std::uint8_t, 0xFF80 - 0xFF00> ports{}; // 0xFF00-0xFF7F
     };
 
     int make_address(std::uint8_t high, std::int8_t low);
