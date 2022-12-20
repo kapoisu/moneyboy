@@ -11,20 +11,35 @@ namespace gameboy::io {
     {
         std::ifstream file{file_name, std::ios::binary};
 
-        std::copy_n(std::istreambuf_iterator<char>(file), rom_00.size(), rom_00.begin());
-        std::copy_n(std::istreambuf_iterator<char>(file), rom.size(), rom.begin());
-    }
+        static constexpr int bank_size{0x4000};
 
-    Cartridge::Type Cartridge::get_type() const
-    {
-        return static_cast<Type>(rom_00[0x0147]);
+        banks[0].resize(bank_size);
+        banks[1].resize(bank_size);
+        std::copy_n(std::istreambuf_iterator<char>(file), bank_size, banks[0].begin());
+        std::copy_n(std::istreambuf_iterator<char>(file), bank_size, banks[1].begin());
+        std::swap(switchable_rom, banks[1]);
     }
 
     std::vector<std::uint8_t> Cartridge::get_header() const
     {
         constexpr static int header_begin{0x0100};
         constexpr static int header_end{0x0150};
-        return {rom_00.cbegin() + header_begin, rom_00.cbegin() + header_end};
+        return {banks[0].cbegin() + header_begin, banks[0].cbegin() + header_end};
+    }
+
+    std::uint8_t Cartridge::read(int address) const
+    {
+        if (address < 0x4000) {
+            return banks[0][address];
+        }
+        else {
+            return switchable_rom[address];
+        }
+    }
+
+    void Cartridge::write(int address, std::uint8_t value)
+    {
+        //throw std::runtime_error{"You shouldn't modify the boot ROM."};
     }
 
     BootLoader::BootLoader(const std::string& file_name)
@@ -59,13 +74,4 @@ namespace gameboy::io {
             cartridge_header[i] = header[i];
         }
     }
-
-    // std::unique_ptr<Bankable> create_mbc(const Cartridge& cartridge)
-    // {
-    //     switch (cartridge.get_type()) {
-    //         using enum Cartridge::Type;
-    //         default:
-    //             return std::make_unique<Mbc>();
-    //     }
-    // }
 }

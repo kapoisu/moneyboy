@@ -2,13 +2,14 @@
 #define IO_CARTRIDGE_H
 
 #include <array>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
 #include "bankable.hpp"
 
 namespace gameboy::io {
-    class Cartridge {
+    class Cartridge : public Bankable {
     public:
         Cartridge(const std::string& file_name);
 
@@ -16,11 +17,12 @@ namespace gameboy::io {
             none = 0x00
         };
 
-        Type get_type() const;
+        std::uint8_t read(int address) const override;
+        void write(int address, std::uint8_t value) override;
         std::vector<std::uint8_t> get_header() const;
     private:
-        std::array<std::uint8_t, 0x4000> rom_00{}; // interrupt vectors + header
-        std::vector<std::uint8_t> rom{};
+        std::vector<std::uint8_t> switchable_rom{};
+        std::vector<std::vector<std::uint8_t>> banks{{}, {}};
     };
 
     class BootLoader : public Bankable {
@@ -32,11 +34,9 @@ namespace gameboy::io {
     private:
         void write(int address, std::uint8_t value) override;
 
-        std::array<std::uint8_t, 0xFF> boot_rom{};
+        std::array<std::uint8_t, 0x100> boot_rom{};
         std::array<std::uint8_t, 0x50> cartridge_header{};
     };
-
-    std::unique_ptr<Bankable> create_mbc(const Cartridge& type);
 }
 
 #endif
