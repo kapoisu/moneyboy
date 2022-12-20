@@ -1,0 +1,21 @@
+#include "vram.hpp"
+
+namespace gameboy::io {
+    Vram::Vram()
+    {
+        static constexpr int bank_size{0x2000};
+
+        banks[0].resize(bank_size);
+        std::swap(active_ram, banks[0]);
+    }
+
+    std::uint8_t Vram::read(int address) const
+    {
+        return active_ram[address];
+    }
+
+    void Vram::write(int address, std::uint8_t value)
+    {
+        active_ram[address] = value;
+    }
+}
