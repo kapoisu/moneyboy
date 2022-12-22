@@ -132,7 +132,7 @@ namespace gameboy::ppu {
         set_lcd_y(*p_bus, static_cast<std::uint8_t>(current_scanline));
 
         /*
-            Tile Map Illustration
+            Layer Illustration
 
                     256 px (= 32 tiles)                1 tile = 8 px * 8 px
             ┌──────┬────┬──┬────────────────┐
@@ -141,15 +141,15 @@ namespace gameboy::ppu {
             │      SCY  |                   │          pixel is located,
           2 │           |                   │
           5 │          \|                   │          Y = (SCY + LCD Y) % 256,
-          6 │           ┼  ┌────────────────┼·······   X = (SCX + column index) % 256.
-            │          /|  │ View Port      │      ·
+          6 │·······    ┼  ┌────────────────┼·······   X = (SCX + column index) % 256.
+            │      ·   /|  │ Viewport       │      ·
           p │    LCD Y  |  │                │      ·   The coordinates above are calculated by pixels,
-          x │          \|  │                │      ·   we have to divide it by the number of pixels of
-            │           ┴  │← current line  │      ·   a tile's width (X) and height (Y) respectively.
-            │              │                │      ·
+          x │      ·   \|  │                │      ·   we have to divide it by the number of pixels of
+            │      ·    ┴  │← current line  │      ·   a tile's width (X) and height (Y) respectively.
+            │      ·       │                │      ·
             └──────────────┼────────────────┘      ·   In this case, a tile is 8 px * 8 px. Hence,
                            ·                       ·
-                           ·························   Tile ID = (Y / 8) * 32 (tiles per row) + (X / 8).
+                           ·························   Tile Map Index = (Y / 8) * 32 (tiles per row) + (X / 8).
 
         */
 
@@ -159,9 +159,6 @@ namespace gameboy::ppu {
             constexpr int map_width{256_px};
             constexpr int map_height{256_px};
             const TileTrait tile_trait{.width{8_px}, .height{8_px}};
-
-            int success{};
-            bool stay{};
 
             auto y_by_pixel{current_scanline + get_scroll_y(*p_bus) % map_height};
             for (auto column{0}; column < pixels_per_scanline; ++column) {
