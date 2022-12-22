@@ -1,6 +1,6 @@
 #include "emulator.hpp"
+#include "cartridge/banking.hpp"
 #include "io/bus.hpp"
-#include "io/cartridge.hpp"
 #include "SDL.h"
 #include <chrono>
 #include <iostream>
@@ -15,18 +15,18 @@ namespace gameboy {
 
     void Emulator::load_game()
     {
-        using io::BootLoader;
+        using cartridge::Banking;
+        using cartridge::Rom;
         using io::Bus;
-        using io::Cartridge;
-        using io::CartridgeBanking;
 
-        auto p_cartridge{std::make_unique<Cartridge>("res/Tetris (World) (Rev A).gb")};
+        //auto p_cartridge{std::make_unique<Rom>("res/Tetris (World) (Rev A).gb")};
+        //auto p_mbc{create_mbc(std::move(p_cartridge))};
 #ifndef SKIP_BOOT_PROCESS
         auto p_boot_loader{std::make_unique<BootLoader>("res/DMG_boot")};
-        p_boot_loader->capture_cartridge(std::move(p_cartridge));
-        auto p_address_bus{std::make_shared<Bus>(CartridgeBanking{std::move(p_boot_loader)})};
+        //p_boot_loader->capture_cartridge(std::move(p_mbc));
+        auto p_address_bus{std::make_shared<Bus>(Banking{std::move(p_boot_loader)})};
 #else
-        auto p_address_bus{std::make_shared<Bus>(CartridgeBanking{std::move(cartridge)})};
+        auto p_address_bus{std::make_shared<Bus>(Banking{std::move(p_mbc)})};
 #endif
         p_sm83 = std::make_unique<cpu::Core>(p_address_bus);
         p_lcd = std::make_unique<ppu::Lcd>(p_address_bus);

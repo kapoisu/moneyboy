@@ -1,15 +1,16 @@
 add_executable(gameboy main.cpp)
+target_sources(gameboy PRIVATE boot_loader.cpp)
 target_sources(gameboy PRIVATE emulator.cpp)
+
+target_sources(gameboy PRIVATE cartridge/banking.cpp)
+target_sources(gameboy PRIVATE cartridge/mbc.cpp)
 
 target_sources(gameboy PRIVATE cpu/arithmetic.cpp)
 target_sources(gameboy PRIVATE cpu/core.cpp)
 target_sources(gameboy PRIVATE cpu/instruction.cpp)
 target_sources(gameboy PRIVATE cpu/registers.cpp)
 
-target_sources(gameboy PRIVATE io/bankable.cpp)
 target_sources(gameboy PRIVATE io/bus.cpp)
-target_sources(gameboy PRIVATE io/cartridge.cpp)
-target_sources(gameboy PRIVATE io/mbc.cpp)
 target_sources(gameboy PRIVATE io/vram.cpp)
 
 target_sources(gameboy PRIVATE ppu/lcd.cpp)

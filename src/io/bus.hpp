@@ -7,21 +7,20 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "bankable.hpp"
-#include "cartridge.hpp"
-#include "vram.hpp"
+#include "cartridge/banking.hpp"
+#include "io/vram.hpp"
 
 namespace gameboy::io {
     class Bus {
     public:
-        Bus(CartridgeBanking bankable);
+        Bus(cartridge::Banking bankable);
 
         std::uint8_t read_byte(int address) const;
         void write_byte(int address, std::uint8_t value);
     private:
-        CartridgeBanking cartridge_area;
+        cartridge::Banking cartridge_area;
         std::array<std::uint8_t, 65536> ram{};
-        Vram vram{}; // 0x8000-0x9FFF
+        io::Vram vram{}; // 0x8000-0x9FFF
         // std::unique_ptr<Bankable> sram{}; // 0xA000-0xBFFF
         // std::unique_ptr<Bankable> wram{}; // 0xC000-0xDFFF
         std::array<std::uint8_t, 0xFF80 - 0xFF00> ports{}; // 0xFF00-0xFF7F

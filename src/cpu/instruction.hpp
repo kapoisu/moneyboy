@@ -78,7 +78,7 @@ namespace gameboy::cpu {
 
     // HALT
     struct Halt {
-        Instruction::SideEffect operator()(int, Registers&, gameboy::io::Bus&)
+        Instruction::SideEffect operator()(int, Registers&, gameboy::io::Bus& mmu)
         {
             return {};
         }

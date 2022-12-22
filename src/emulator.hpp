@@ -4,7 +4,6 @@
 #include <memory>
 #include "cpu/core.hpp"
 #include "ppu/lcd.hpp"
-#include "io/bus.hpp"
 
 namespace gameboy {
     class Emulator {

@@ -1,5 +1,4 @@
 #include "bus.hpp"
-#include "mbc.hpp"
 #include <algorithm>
 #include <cassert>
 #include <fstream>
@@ -8,7 +7,7 @@
 #include <stdexcept>
 
 namespace gameboy::io {
-    Bus::Bus(CartridgeBanking bankable) : cartridge_area{std::move(bankable)}
+    Bus::Bus(cartridge::Banking bankable) : cartridge_area{std::move(bankable)}
     {
         //ram[0xFF44] = 144; // bypass frame check
     }
@@ -23,6 +22,9 @@ namespace gameboy::io {
         }
         else if (address < 0x9FFF) {
             return vram.read(address - 0x8000);
+        }
+        else if (address == 0xFF44) {
+            return ports[address - 0xFF00];
         }
         else if (address >= 0xFF00 && address < 0xFF80) {
             return ports[address - 0xFF00];

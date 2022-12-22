@@ -3,8 +3,9 @@
 
 #include <memory>
 #include "io/bus.hpp"
-#include "registers.hpp"
 #include "instruction.hpp"
+#include "registers.hpp"
+#include "debugger.hpp"
 
 namespace gameboy::cpu {
     class Core {
