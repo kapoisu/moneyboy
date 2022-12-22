@@ -66,7 +66,7 @@ namespace gameboy {
 
         SDL_RenderSetScale(p_renderer.get(), 3, 3);
         TexturePtr p_texture{
-            SDL_CreateTexture(p_renderer.get(), SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, 160, 144),
+            SDL_CreateTexture(p_renderer.get(), SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STATIC, 160, 144),
             [](SDL_Texture* ptr) { SDL_DestroyTexture(ptr); }
         };
 

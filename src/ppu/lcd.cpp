@@ -199,11 +199,7 @@ namespace gameboy::ppu {
         if (cycle == cycles_per_frame) {
             SDL_SetRenderDrawColor(&renderer, 0xFF, 0xFF, 0xFF, 0xFF);
             SDL_RenderClear(&renderer);
-            std::uint8_t *buffer{};
-            int pitch{};
-            SDL_LockTexture(&texture, nullptr, (void**)&buffer, &pitch);
-            std::copy_n(bgcolor.cbegin(), bgcolor.size(), buffer);
-            SDL_UnlockTexture(&texture);
+            SDL_UpdateTexture(&texture, nullptr, bgcolor.data(), pixels_per_scanline * 4);
             SDL_RenderCopy(&renderer, &texture, nullptr, nullptr);
             SDL_RenderPresent(&renderer);
 
