@@ -5,6 +5,15 @@
 #include <iostream>
 
 namespace gameboy::cpu {
+    Instruction::SideEffect halting(int, Registers&, gameboy::io::Bus& mmu)
+    {
+        if (has_pending_interrupt(mmu)) {
+            return {};
+        }
+
+        return {.cycle_adjustment{-1}};
+    }
+
     Core::Core(std::shared_ptr<gameboy::io::Bus> shared_bus) : p_bus{std::move(shared_bus)}
     {
     }
@@ -1266,6 +1275,18 @@ namespace gameboy::cpu {
 
         if (result.ime_adjustment.has_value()) {
             interrupt_master_enable = result.ime_adjustment.value();
+        }
+
+        if (result.halt_attempt.has_value()) {
+            if (result.halt_attempt->success) {
+                instruction = {
+                    .opcode{}, .name{"HALTED"}, .duration{1},
+                    .operation{halting}
+                };
+            }
+            else {
+                instruction = decode(p_bus->read_byte(regs.program_counter));
+            }
         }
     }
 

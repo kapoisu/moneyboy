@@ -9,10 +9,15 @@
 #include "registers.hpp"
 
 namespace gameboy::cpu {
+    struct TryHalt {
+        bool success;
+    };
+
     struct Instruction {
         struct SideEffect {
             int cycle_adjustment{};
             std::optional<bool> ime_adjustment{};
+            std::optional<TryHalt> halt_attempt{};
         };
 
         using Operation = std::function<Instruction::SideEffect(int, Registers&, gameboy::io::Bus&)>;
@@ -35,6 +40,11 @@ namespace gameboy::cpu {
         int duration{1}; // m-cycle
         Operation operation{[](int, Registers&, gameboy::io::Bus&) -> SideEffect { return {}; }};
     };
+
+    inline bool has_pending_interrupt(const gameboy::io::Bus& mmu)
+    {
+        return mmu.read_byte(0xFF0F) & mmu.read_byte(0xFFFF) & 0x1F;
+    }
 
     using Reg16Ref = std::reference_wrapper<PairedRegister>;
     using Reg8Getter = std::uint8_t (Reg16Ref::type::*)() const;
