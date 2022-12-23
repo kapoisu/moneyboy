@@ -13,6 +13,7 @@ target_sources(gameboy PRIVATE cpu/registers.cpp)
 target_sources(gameboy PRIVATE io/bus.cpp)
 target_sources(gameboy PRIVATE io/vram.cpp)
 
+target_sources(gameboy PRIVATE ppu/core.cpp)
 target_sources(gameboy PRIVATE ppu/lcd.cpp)
 
 target_include_directories(gameboy PRIVATE ${CMAKE_SOURCE_DIR}/src)

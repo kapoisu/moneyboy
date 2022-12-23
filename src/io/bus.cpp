@@ -1,9 +1,5 @@
 #include "bus.hpp"
-#include <algorithm>
 #include <cassert>
-#include <fstream>
-#include <iterator>
-#include <iostream>
 #include <stdexcept>
 
 namespace gameboy::io {
@@ -21,7 +17,10 @@ namespace gameboy::io {
             return cartridge_area.read(address);
         }
         else if (address < 0x9FFF) {
-            return vram.read(address - 0x8000);
+            return vram.read(address);
+        }
+        else if (address >= 0xFF40 && address < 0xFF4C) {
+            return lcd_port->read(address);
         }
         else if (address == 0xFF44) {
             return ports[address - 0xFF00];
@@ -46,7 +45,10 @@ namespace gameboy::io {
             cartridge_area.write(address, value);
         }
         else if (address < 0x9FFF) {
-            vram.write(address - 0x8000, value);
+            vram.write(address, value);
+        }
+        else if (address >= 0xFF40 && address < 0xFF4C) {
+            lcd_port->write(address, value);
         }
         else if (address == 0xFF50) {
             cartridge_area.disable_boot_rom();
@@ -56,6 +58,11 @@ namespace gameboy::io {
         }
 
         ram[address] = value;
+    }
+
+    void Bus::connect_lcd(std::shared_ptr<Port> p_lcd)
+    {
+        lcd_port = std::move(p_lcd);
     }
 
     int make_address(std::uint8_t high, std::int8_t low)

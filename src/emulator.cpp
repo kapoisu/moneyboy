@@ -28,8 +28,10 @@ namespace gameboy {
 #else
         auto p_address_bus{std::make_shared<Bus>(Banking{std::move(p_mbc)})};
 #endif
-        p_sm83 = std::make_unique<cpu::Core>(p_address_bus);
-        p_lcd = std::make_unique<ppu::Lcd>(p_address_bus);
+        p_lcd = std::make_shared<ppu::Lcd>();
+        p_address_bus->connect_lcd(p_lcd);
+        p_cpu = std::make_unique<cpu::Core>(p_address_bus);
+        p_ppu = std::make_unique<ppu::Core>(p_address_bus);
     }
 
     void Emulator::run()
@@ -95,7 +97,7 @@ namespace gameboy {
             }
 
             if (cycle < cycles_per_frame) {
-                p_sm83->tick();
+                p_cpu->tick();
                 for (auto i{0}; i < 4; ++i) {
                     p_lcd->update(*p_renderer, *p_texture);
                 }

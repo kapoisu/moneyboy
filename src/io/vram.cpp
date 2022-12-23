@@ -11,11 +11,11 @@ namespace gameboy::io {
 
     std::uint8_t Vram::read(int address) const
     {
-        return active_ram[address];
+        return active_ram[address - 0x8000];
     }
 
     void Vram::write(int address, std::uint8_t value)
     {
-        active_ram[address] = value;
+        active_ram[address - 0x8000] = value;
     }
 }

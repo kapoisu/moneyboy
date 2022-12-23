@@ -10,7 +10,7 @@
 namespace gameboy::cpu {
     class Core {
     public:
-        explicit Core(std::shared_ptr<gameboy::io::Bus> shared_bus);
+        explicit Core(std::shared_ptr<io::Bus> shared_bus);
         void tick();
         void test();
 
@@ -22,7 +22,7 @@ namespace gameboy::cpu {
         Instruction instruction{};
         Registers regs{};
         bool interrupt_master_enable{};
-        std::shared_ptr<gameboy::io::Bus> p_bus;
+        std::shared_ptr<io::Bus> p_bus;
     };
 }
 

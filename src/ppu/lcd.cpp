@@ -1,11 +1,26 @@
 #include "lcd.hpp"
-#include <algorithm>
 #include <array>
 #include <bitset>
 #include <iostream>
+#include <vector>
 
 namespace gameboy::ppu {
-    enum LcdControl {
+    enum Register {
+        lcdc = 0,
+        stat = 1,
+        scy = 2,
+        scx = 3,
+        ly = 4,
+        lyc = 5,
+        dma = 6,
+        bgp = 7,
+        obp0 = 8,
+        obp1 = 9,
+        wy = 10,
+        wx = 11
+    };
+
+    enum Control {
         background_display = 0,
         object_display = 1,
         object_size = 2,
@@ -16,87 +31,40 @@ namespace gameboy::ppu {
         lcd_display = 7
     };
 
-    struct Position {
-        int x;
-        int y;
-    };
-
-    struct TileTrait {
-        int width;
-        int height;
-    };
-
-    constexpr int operator ""_px(unsigned long long value)
+    int Lcd::background_map_selection() const
     {
-        return static_cast<int>(value);
+        std::bitset<8> lcd_control{registers.at(lcdc)};
+        return lcd_control.test(background_tile_map_select);
     }
 
-    std::uint8_t get_scroll_y(const gameboy::io::Bus& bus)
+    int Lcd::data_region_selection() const
     {
-        return bus.read_byte(0xFF42);
+        std::bitset<8> lcd_control{registers.at(lcdc)};
+        return lcd_control.test(tile_data_select);
     }
 
-    std::uint8_t get_scroll_x(const gameboy::io::Bus& bus)
+    bool Lcd::is_enabled() const
     {
-        return bus.read_byte(0xFF43);
+        std::bitset<8> lcd_control{registers.at(lcdc)};
+        return lcd_control.test(lcd_display);
     }
 
-    std::uint8_t get_lcd_y(const gameboy::io::Bus& bus)
+    std::uint8_t Lcd::get_scroll_y() const
     {
-        return bus.read_byte(0xFF44);
+        return registers.at(scy);
     }
 
-    void set_lcd_y(gameboy::io::Bus& bus, std::uint8_t value)
+    std::uint8_t Lcd::get_scroll_x() const
     {
-        bus.write_byte(0xFF44, value);
+        return registers.at(scx);
     }
 
-    int get_tile_id(const std::bitset<8>& lcd_control, const gameboy::io::Bus& bus, Position pos, TileTrait tile = {8_px, 8_px})
+    std::uint8_t Lcd::get_y_coordinate() const
     {
-        // There are 2 tile maps in a VRAM bank.
-        auto tile_map_begin{lcd_control.test(background_tile_map_select) ? 0x9C00 : 0x9800};
-
-        constexpr int tiles_per_row{32};
-
-        auto tile_map_index{(pos.y / tile.height) * tiles_per_row + (pos.x / tile.width)};
-
-        return bus.read_byte(tile_map_begin + tile_map_index);
+        return registers.at(ly);
     }
 
-    int get_tile_data_index(const std::bitset<8>& lcd_control, int tile_id, Position pos, TileTrait tile = {8_px, 8_px})
-    {
-        // There are 2 kinds of indexing (map ID to data).
-        bool is_signed_index{!lcd_control.test(tile_data_select)};
-
-        // If the range begins from 0x8000, access the data from 0x8000 to 0x8FFF with an index from 0 to 255.
-        // If the range begins from 0x8800, access the data from 0x8800 to 0x97FF with an index from -128 to 127.
-        auto tile_data_begin{!is_signed_index ? 0x8000 : 0x8800};
-
-        /*
-            Rotate the entire range only if the index is signed.
-            [128(-127)] -> [0]
-            [255(-1)]   -> [127]
-            [0]         -> [128]
-            [127]       -> [255]
-        */
-        auto adjusted_id{(tile_id + 128 * is_signed_index) % 256};
-
-        // The data of a pixel only costs 2 bits, while each of them is spilt into [address] and [address + 1].
-        // Therefore, the data of 8 pixels (typically a row in a tile) is stored together within 2 bytes.
-        constexpr auto bits_per_pixel{2};
-
-        // The coordinate passed in shows the current position within a tile map.
-        // We want to find out the position within a tile instead.
-        auto y_within_a_tile{pos.y % tile.height};
-
-        auto bytes_per_tile{tile.width * tile.height * bits_per_pixel / 8}; // usually this value is evaluated to 16
-        auto bytes_per_row{bits_per_pixel * tile.width / 8}; // typically this value is 2
-        auto offset{adjusted_id * bytes_per_tile + y_within_a_tile * bytes_per_row};
-
-        return tile_data_begin + offset;
-    }
-
-    std::uint8_t get_background_color(const gameboy::io::Bus& bus, int index)
+    std::uint8_t Lcd::get_background_color(int index) const
     {
         /*
            Note that this implementation may not show the same colors as a DMG model does,
@@ -104,106 +72,55 @@ namespace gameboy::ppu {
         */
         static std::array<std::uint8_t, 4> gray_shade{255, 211, 169, 0}; // white, light gray, dark gray, black
 
-        auto palette{bus.read_byte(0xFF47)}; // background color palette, where each element refers to a color ID
+        auto palette{registers.at(bgp)}; // background color palette, where each element refers to a color ID
 
         return gray_shade[(palette >> (index * 2)) & 0b00000011]; // each color is represented by 2 bits
     }
 
-    Lcd::Lcd(std::shared_ptr<gameboy::io::Bus> shared_bus) : p_bus{std::move(shared_bus)}
-    {
-    }
-
     void Lcd::update(SDL_Renderer& renderer, SDL_Texture& texture)
     {
-        constexpr int oam_search_duration{80};
-        constexpr int scanlines_per_frame{144};
-        constexpr int cycles_per_scanline{456};
-        constexpr int cycles_per_frame{70224};
+        constexpr int ly_modulo{154};
+        static int counter_x{0};
 
-        static int cycle{0};
-
-        std::bitset<8> lcd_control{p_bus->read_byte(0xFF40)};
-        if (!lcd_control.test(lcd_display)) {
-            cycle = 0;
+        if (!is_enabled()) {
             return;
         }
 
-        int current_scanline{cycle / cycles_per_scanline};
-        set_lcd_y(*p_bus, static_cast<std::uint8_t>(current_scanline));
-
-        /*
-            Layer Illustration
-
-                    256 px (= 32 tiles)                1 tile = 8 px * 8 px
-            ┌──────┬────┬──┬────────────────┐
-            │      │   /|  │(wrapped around)│
-            ├──────┘    |  └────────────────┤          If we want to find out which tile the current
-            │      SCY  |                   │          pixel is located,
-          2 │           |                   │
-          5 │          \|                   │          Y = (SCY + LCD Y) % 256,
-          6 │·······    ┼  ┌────────────────┼·······   X = (SCX + column index) % 256.
-            │      ·   /|  │ Viewport       │      ·
-          p │    LCD Y  |  │                │      ·   The coordinates above are calculated by pixels,
-          x │      ·   \|  │                │      ·   we have to divide it by the number of pixels of
-            │      ·    ┴  │← current line  │      ·   a tile's width (X) and height (Y) respectively.
-            │      ·       │                │      ·
-            └──────────────┼────────────────┘      ·   In this case, a tile is 8 px * 8 px. Hence,
-                           ·                       ·
-                           ·························   Tile Map Index = (Y / 8) * 32 (tiles per row) + (X / 8).
-
-        */
-
-        constexpr int pixels_per_scanline{160};
-        static std::array<std::uint8_t, pixels_per_scanline * scanlines_per_frame * 4> bgcolor{};
-        if (cycle % cycles_per_scanline == oam_search_duration && current_scanline < scanlines_per_frame) {
-            constexpr int map_width{256_px};
-            constexpr int map_height{256_px};
-            const TileTrait tile_trait{.width{8_px}, .height{8_px}};
-
-            auto y_by_pixel{current_scanline + get_scroll_y(*p_bus) % map_height};
-            for (auto column{0}; column < pixels_per_scanline; ++column) {
-                auto x_by_pixel{(column + get_scroll_x(*p_bus)) % map_width};
-                Position pos{x_by_pixel, y_by_pixel};
-
-                auto tile_id{get_tile_id(lcd_control, *p_bus, pos)};
-                auto address{get_tile_data_index(lcd_control, tile_id, pos)};
-
-                std::bitset<8> low_byte{p_bus->read_byte(address)};
-                std::bitset<8> high_byte{p_bus->read_byte(address + 1)};
-
-                auto x_within_a_tile{pos.x % tile_trait.width};
-                auto bit_pos{7 - x_within_a_tile};
-                bool lsb_of_pixel{low_byte[bit_pos]};
-                bool msb_of_pixel{high_byte[bit_pos]};
-                auto color_id{(msb_of_pixel << 1) | lsb_of_pixel};
-                auto color{get_background_color(*p_bus, color_id)};
-
-                bgcolor[(current_scanline * pixels_per_scanline + column) * 4 + 3] = color;
-                bgcolor[(current_scanline * pixels_per_scanline + column) * 4 + 2] = color;
-                bgcolor[(current_scanline * pixels_per_scanline + column) * 4 + 1] = color;
-                bgcolor[(current_scanline * pixels_per_scanline + column) * 4 + 0] = 0xFF;
-            }
-
-            // if (stay) {
-            //     for (auto i{0}; i < 144; ++i) {
-            //         for (auto j{0}; j < 160; ++j) {
-            //             std::cout << ((bgcolor[i * 160 + j] == 255) ? "　" : "．");
-            //         }
-            //         std::cout << "\n";
-            //     }
-            // }
+        counter_x = (counter_x + 1) % (cycles_per_scanline / 4);
+        if (counter_x == 0) {
+            registers[ly] = static_cast<std::uint8_t>((registers[ly] + 1) % ly_modulo);
         }
 
-        ++cycle;
-
-        if (cycle == cycles_per_frame) {
+        if (registers[ly] == scanlines_per_frame && counter_x == 0) {
             SDL_SetRenderDrawColor(&renderer, 0xFF, 0xFF, 0xFF, 0xFF);
             SDL_RenderClear(&renderer);
-            SDL_UpdateTexture(&texture, nullptr, bgcolor.data(), pixels_per_scanline * 4);
+            SDL_UpdateTexture(&texture, nullptr, frame_buffer.data(), 160 * 4);
             SDL_RenderCopy(&renderer, &texture, nullptr, nullptr);
             SDL_RenderPresent(&renderer);
+        }
+    }
 
-            cycle = 0;
+    void Lcd::push_data(Pixel pixel)
+    {
+        frame_buffer[(pixel.pos.y * Lcd::pixels_per_scanline + pixel.pos.x) * 4 + 3] = pixel.color;
+        frame_buffer[(pixel.pos.y * Lcd::pixels_per_scanline + pixel.pos.x) * 4 + 2] = pixel.color;
+        frame_buffer[(pixel.pos.y * Lcd::pixels_per_scanline + pixel.pos.x) * 4 + 1] = pixel.color;
+        frame_buffer[(pixel.pos.y * Lcd::pixels_per_scanline + pixel.pos.x) * 4 + 0] = 0xFF;
+    }
+
+    std::uint8_t Lcd::read(int address) const
+    {
+        return registers.at(address - 0xFF40);
+    }
+
+    void Lcd::write(int address, std::uint8_t value)
+    {
+        address -= 0xFF40;
+        switch (address) {
+            case ly:
+                return;
+            default:
+                registers[address] = value;
         }
     }
 }
