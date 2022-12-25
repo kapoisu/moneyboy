@@ -88,7 +88,7 @@ namespace gameboy::ppu {
             constexpr int map_height{256_px};
             const TileTrait tile_trait{.width{8_px}, .height{8_px}};
 
-            auto y_by_pixel{current_scanline + screen.get_scroll_y() % map_height};
+            auto y_by_pixel{(current_scanline + screen.get_scroll_y()) % map_height};
             for (auto column{0}; column < Lcd::pixels_per_scanline; ++column) {
                 auto x_by_pixel{(column + screen.get_scroll_x()) % map_width};
                 Position pos{x_by_pixel, y_by_pixel};
