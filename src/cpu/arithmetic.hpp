@@ -20,7 +20,7 @@ namespace gameboy::cpu {
         constexpr auto full_mask{(1 << (sizeof(T) * 8)) - 1};
 
         return {
-            .output    {static_cast<T>(a + b)},
+            .output    {static_cast<T>(a + b + carry)},
             .half_carry{(a & half_mask) + (b & half_mask) + carry > half_mask},
             .carry     {(a & full_mask) + (b & full_mask) + carry > full_mask}
         };
@@ -45,7 +45,7 @@ namespace gameboy::cpu {
         constexpr auto full_mask{(1 << (sizeof(T) * 8)) - 1};
 
         return {
-            .output    {static_cast<T>(a - b)},
+            .output    {static_cast<T>(a - b - carry)},
             .half_carry{(a & half_mask) - (b & half_mask) - carry < 0},
             .carry     {(a & full_mask) - (b & full_mask) - carry < 0}
         };
