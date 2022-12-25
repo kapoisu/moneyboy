@@ -13,8 +13,8 @@ namespace gameboy::cartridge {
 
         banks[0].resize(bank_size);
         banks[1].resize(bank_size);
-        std::copy_n(std::istreambuf_iterator<char>(file), bank_size, banks[0].begin());
-        std::copy_n(std::istreambuf_iterator<char>(file), bank_size, banks[1].begin());
+        std::generate(banks[0].begin(), banks[0].end(), [&file](){ return file.get(); });
+        std::generate(banks[1].begin(), banks[1].end(), [&file](){ return file.get(); });
         std::swap(switchable_rom, banks[1]);
     }
 
@@ -28,7 +28,7 @@ namespace gameboy::cartridge {
             return p_storage->banks[0][address];
         }
         else {
-            return p_storage->switchable_rom[address];
+            return p_storage->switchable_rom[address - 0x4000];
         }
     }
 
