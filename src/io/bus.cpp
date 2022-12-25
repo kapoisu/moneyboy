@@ -22,10 +22,7 @@ namespace gameboy::io {
         else if (address >= 0xFF40 && address < 0xFF4C) {
             return lcd_port->read(address);
         }
-        else if (address == 0xFF44) {
-            return ports[address - 0xFF00];
-        }
-        else if (address >= 0xFF00 && address < 0xFF80) {
+        else if (address >= 0xFF4D && address < 0xFF80) {
             return ports[address - 0xFF00];
         }
         else if (address < 0x10000) {
@@ -53,11 +50,12 @@ namespace gameboy::io {
         else if (address == 0xFF50) {
             cartridge_area.disable_boot_rom();
         }
-        else if (address >= 0xFF00 && address < 0xFF80) {
-            ports[address - 0xFF00] = value;
+        else if (address >= 0xFF4D && address < 0xFF80) {
+            ports[address - 0xFF4D] = value;
         }
-
-        ram[address] = value;
+        else {
+            ram[address] = value;
+        }
     }
 
     void Bus::connect_lcd(std::shared_ptr<Port> p_lcd)
