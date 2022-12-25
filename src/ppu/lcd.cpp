@@ -31,6 +31,10 @@ namespace gameboy::ppu {
         lcd_display = 7
     };
 
+    Lcd::Lcd(ui::RendererPtr p_rend, ui::TexturePtr p_text) : p_renderer{std::move(p_rend)}, p_texture{std::move(p_text)}
+    {
+    }
+
     int Lcd::background_map_selection() const
     {
         std::bitset<8> lcd_control{registers.at(lcdc)};
@@ -77,7 +81,7 @@ namespace gameboy::ppu {
         return gray_shade[(palette >> (index * 2)) & 0b00000011]; // each color is represented by 2 bits
     }
 
-    void Lcd::update(SDL_Renderer& renderer, SDL_Texture& texture)
+    void Lcd::update()
     {
         constexpr int ly_modulo{154};
         static int counter_x{0};
@@ -92,11 +96,11 @@ namespace gameboy::ppu {
         }
 
         if (registers[ly] == scanlines_per_frame && counter_x == 0) {
-            SDL_SetRenderDrawColor(&renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-            SDL_RenderClear(&renderer);
-            SDL_UpdateTexture(&texture, nullptr, frame_buffer.data(), 160 * 4);
-            SDL_RenderCopy(&renderer, &texture, nullptr, nullptr);
-            SDL_RenderPresent(&renderer);
+            SDL_SetRenderDrawColor(p_renderer.get(), 0xFF, 0xFF, 0xFF, 0xFF);
+            SDL_RenderClear(p_renderer.get());
+            SDL_UpdateTexture(p_texture.get(), nullptr, frame_buffer.data(), 160 * 4);
+            SDL_RenderCopy(p_renderer.get(), p_texture.get(), nullptr, nullptr);
+            SDL_RenderPresent(p_renderer.get());
         }
     }
 
@@ -118,9 +122,11 @@ namespace gameboy::ppu {
         address -= 0xFF40;
         switch (address) {
             case ly:
+                registers[address] = 0;
                 return;
             default:
                 registers[address] = value;
+                return;
         }
     }
 }

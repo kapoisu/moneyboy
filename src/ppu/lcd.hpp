@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <memory>
 #include "io/port.hpp"
-#include "SDL.h"
+#include "ui/window.hpp"
 
 namespace gameboy::ppu {
     struct Position {
@@ -20,6 +20,7 @@ namespace gameboy::ppu {
 
     class Lcd : public io::Port {
     public:
+        Lcd(ui::RendererPtr p_rend, ui::TexturePtr p_text);
         int background_map_selection() const;
         int data_region_selection() const;
         bool is_enabled() const;
@@ -27,7 +28,7 @@ namespace gameboy::ppu {
         std::uint8_t get_scroll_x() const;
         std::uint8_t get_y_coordinate() const;
         std::uint8_t get_background_color(int index) const;
-        void update(SDL_Renderer& renderer, SDL_Texture& texture);
+        void update();
         void push_data(Pixel pixel);
 
         virtual std::uint8_t read(int address) const override;
@@ -39,6 +40,9 @@ namespace gameboy::ppu {
     private:
         std::array<std::uint8_t, pixels_per_scanline * scanlines_per_frame * 4> frame_buffer{};
         std::array<std::uint8_t, 12> registers{};
+
+        ui::RendererPtr p_renderer;
+        ui::TexturePtr p_texture;
     };
 }
 

@@ -6,17 +6,7 @@ namespace gameboy::ppu {
     {
     }
 
-    struct TileTrait {
-        int width;
-        int height;
-    };
-
-    constexpr int operator ""_px(unsigned long long value)
-    {
-        return static_cast<int>(value);
-    }
-
-    int get_tile_id(const Lcd& screen, const gameboy::io::Bus& bus, Position pos, TileTrait tile = {8_px, 8_px})
+    int get_tile_id(const Lcd& screen, const gameboy::io::Bus& bus, Position pos, TileTrait tile)
     {
         constexpr int tiles_per_row{32};
         auto tile_map_begin{screen.background_map_selection() == 0 ? 0x9800 : 0x9C00};
@@ -25,7 +15,7 @@ namespace gameboy::ppu {
         return bus.read_byte(tile_map_begin + tile_map_index);
     }
 
-    int get_tile_data_index(const Lcd& screen, int tile_id, Position pos, TileTrait tile = {8_px, 8_px})
+    int get_tile_data_index(const Lcd& screen, int tile_id, Position pos, TileTrait tile)
     {
         // There are 2 kinds of indexing (map ID to data).
         bool is_signed_index{screen.data_region_selection() == 0 ? true : false};

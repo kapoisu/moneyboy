@@ -1,16 +1,19 @@
 #include "emulator.hpp"
 #include "cartridge/banking.hpp"
 #include "io/bus.hpp"
-#include "SDL.h"
 #include <chrono>
 #include <iostream>
 
 namespace gameboy {
+    using namespace ui;
+
     Emulator::Emulator()
+        : p_game{ui::create_window("Money Boy", Width{480}, Height{432})}
+        //, p_tile{ui::create_window("Tile Data", Width{512}, Height{512})}
     {
-        if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-            throw std::runtime_error{SDL_GetError()};
-        }
+        auto game_renderer{ui::create_renderer(p_game, Scale{3.0}, Scale{3.0})};
+        auto game_texture{ui::create_texture(game_renderer, Width{160}, Height{144})};
+        p_lcd = std::make_shared<ppu::Lcd>(std::move(game_renderer), std::move(game_texture));
     }
 
     void Emulator::load_game()
@@ -19,16 +22,15 @@ namespace gameboy {
         using cartridge::Rom;
         using io::Bus;
 
-        //auto p_cartridge{std::make_unique<Rom>("res/Tetris (World) (Rev A).gb")};
-        //auto p_mbc{create_mbc(std::move(p_cartridge))};
-#ifndef SKIP_BOOT_PROCESS
+        auto p_cartridge{std::make_unique<Rom>("res/blargg/01-special.gb")};
+        auto p_mbc{create_mbc(std::move(p_cartridge))};
+#ifndef PREBOOT
         auto p_boot_loader{std::make_unique<BootLoader>("res/DMG_boot")};
-        //p_boot_loader->capture_cartridge(std::move(p_mbc));
+        p_boot_loader->capture_cartridge(std::move(p_mbc));
         auto p_address_bus{std::make_shared<Bus>(Banking{std::move(p_boot_loader)})};
 #else
         auto p_address_bus{std::make_shared<Bus>(Banking{std::move(p_mbc)})};
 #endif
-        p_lcd = std::make_shared<ppu::Lcd>();
         p_address_bus->connect_lcd(p_lcd);
         p_cpu = std::make_unique<cpu::Core>(p_address_bus);
         p_ppu = std::make_unique<ppu::Core>(p_address_bus);
@@ -37,44 +39,8 @@ namespace gameboy {
     void Emulator::run()
     {
         load_game();
-
-        using WindowPtr = std::unique_ptr<SDL_Window, void(*)(SDL_Window*)>;
-        using RendererPtr = std::unique_ptr<SDL_Renderer, void(*)(SDL_Renderer*)>;
-        using TexturePtr = std::unique_ptr<SDL_Texture, void(*)(SDL_Texture*)>;
         using Clock = std::chrono::steady_clock;
         using Timestamp = std::chrono::time_point<Clock>;
-
-        constexpr auto position_x{SDL_WINDOWPOS_UNDEFINED};
-        constexpr auto position_y{SDL_WINDOWPOS_UNDEFINED};
-        constexpr int window_width{480};
-        constexpr int window_height{432};
-        WindowPtr p_window{
-            SDL_CreateWindow("Money Boy", position_x, position_y, window_width, window_height, SDL_WINDOW_SHOWN),
-            [](SDL_Window* ptr) { SDL_DestroyWindow(ptr); }
-        };
-
-        if (!p_window) {
-            throw std::runtime_error{SDL_GetError()};
-        }
-
-        RendererPtr p_renderer{
-            SDL_CreateRenderer(p_window.get(), -1, SDL_RENDERER_ACCELERATED),
-            [](SDL_Renderer* ptr) { SDL_DestroyRenderer(ptr); }
-        };
-
-        if (!p_renderer) {
-            throw std::runtime_error{SDL_GetError()};
-        }
-
-        SDL_RenderSetScale(p_renderer.get(), 3, 3);
-        TexturePtr p_texture{
-            SDL_CreateTexture(p_renderer.get(), SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STATIC, 160, 144),
-            [](SDL_Texture* ptr) { SDL_DestroyTexture(ptr); }
-        };
-
-        if (!p_texture) {
-            throw std::runtime_error{SDL_GetError()};
-        }
 
         constexpr int cycles_per_frame{70224};
         auto enough_time = [cycles_per_frame](const Timestamp& prev, const Timestamp& current) -> bool {
@@ -98,10 +64,12 @@ namespace gameboy {
 
             if (cycle < cycles_per_frame) {
                 p_cpu->tick();
+
                 for (auto i{0}; i < 4; ++i) {
-                    p_lcd->update(*p_renderer, *p_texture);
+                    p_ppu->tick(*p_lcd);
                 }
 
+                p_lcd->update();
                 cycle += 4;
             }
 
@@ -110,15 +78,7 @@ namespace gameboy {
                     prev = current;
                     cycle = 0;
                 }
-                else {
-                    std::cout << "too fast";
-                }
             }
         }
-    }
-
-    Emulator::~Emulator()
-    {
-        SDL_Quit();
     }
 }

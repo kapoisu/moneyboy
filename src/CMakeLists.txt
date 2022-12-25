@@ -16,6 +16,8 @@ target_sources(gameboy PRIVATE io/vram.cpp)
 target_sources(gameboy PRIVATE ppu/core.cpp)
 target_sources(gameboy PRIVATE ppu/lcd.cpp)
 
+target_sources(gameboy PRIVATE ui/window.cpp)
+
 target_include_directories(gameboy PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
 target_include_directories(gameboy PRIVATE ${SDL2_INCLUDE_DIR})
