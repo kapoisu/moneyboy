@@ -3,7 +3,7 @@
 #include <stdexcept>
 
 namespace gameboy::cpu {
-    FlagRegister::FlagRegister(std::uint8_t data) : value{data}
+    FlagRegister::FlagRegister(std::uint8_t data) : value{static_cast<std::uint8_t>(data & 0xF0)}
     {
     }
 
