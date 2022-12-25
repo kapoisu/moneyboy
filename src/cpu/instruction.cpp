@@ -9,9 +9,6 @@ namespace gameboy::cpu {
                 offset = mmu.read_byte(regs.program_counter++);
                 return;
             case 1:
-                // Specialized action
-                return;
-            case 2:
                 regs.program_counter = static_cast<std::uint16_t>(regs.program_counter + offset);
                 return;
             default:
@@ -30,9 +27,6 @@ namespace gameboy::cpu {
                 address.set_high(mmu.read_byte(regs.program_counter++));
                 return;
             case 2:
-                // Specialized action
-                return;
-            case 3:
                 regs.program_counter = address;
                 return;
             default:
@@ -66,9 +60,6 @@ namespace gameboy::cpu {
                 return;
             case 1:
                 address.set_high(mmu.read_byte(regs.program_counter++));
-                return;
-            case 2:
-                // Specialized action
                 return;
             case 3:
                 mmu.write_byte(--regs.sp, regs.program_counter.get_high());

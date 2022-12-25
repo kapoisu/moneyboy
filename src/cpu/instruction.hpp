@@ -1285,14 +1285,8 @@ namespace gameboy::cpu {
     struct Jr<void, Instruction::Operand::i8> {
         Instruction::SideEffect operator()(int cycle, Registers& regs, gameboy::io::Bus& mmu)
         {
-            switch (cycle) {
-                case 1:
-                    // Non-conditional: do nothing
-                    return {};
-                default:
-                    relative_jump(cycle, regs, mmu);
-                    return {};
-            }
+            relative_jump(cycle, regs, mmu);
+            return {};
         }
     };
 
@@ -1307,9 +1301,9 @@ namespace gameboy::cpu {
                     // Conditional: branching
                     if (!pred(regs)) {
                         // Skip the jump
-                        return {.cycle_adjustment{-1}};
+                        return {.cycle_adjustment{1}};
                     }
-                    return {};
+                    [[fallthrough]];
                 default:
                     relative_jump(cycle, regs, mmu);
                     return {};
@@ -1345,14 +1339,8 @@ namespace gameboy::cpu {
     struct Jp<void, Instruction::Operand::u16> {
         Instruction::SideEffect operator()(int cycle, Registers& regs, gameboy::io::Bus& mmu)
         {
-            switch (cycle) {
-                case 2:
-                    // Non-conditional: do nothing
-                    return {};
-                default:
-                    jump(cycle, regs, mmu);
-                    return {};
-            }
+            jump(cycle, regs, mmu);
+            return {};
         }
     };
 
@@ -1367,9 +1355,9 @@ namespace gameboy::cpu {
                     // Conditional: branching
                     if (!pred(regs)) {
                         // Skip the jump
-                        return {.cycle_adjustment{-1}};
+                        return {.cycle_adjustment{1}};
                     }
-                    return {};
+                    [[fallthrough]];
                 default:
                     jump(cycle, regs, mmu);
                     return {};
@@ -1402,17 +1390,15 @@ namespace gameboy::cpu {
         {
             switch (cycle) {
                 case 0:
-                    // Conditional: do nothing
                     if (!pred(regs)) {
-                        // Skip the jump
-                        return {.cycle_adjustment{-3}};
+                        return {.cycle_adjustment{3}};
                     }
                     return {};
                 default:
-                /*
-                    Perform the same actions as the non-conditional one, while the
-                    timing is postponed for 1 cycle because of the branching above.
-                */
+                    /*
+                        Perform the same actions as the non-conditional one, while the
+                        timing is postponed for 1 cycle because of the branching above.
+                    */
                     ret(cycle - 1, regs, mmu);
                     return {};
             }
@@ -1442,14 +1428,8 @@ namespace gameboy::cpu {
     struct Call<void, Instruction::Operand::u16> {
         Instruction::SideEffect operator()(int cycle, Registers& regs, gameboy::io::Bus& mmu)
         {
-            switch (cycle) {
-                case 2:
-                    // Non-conditional: do nothing
-                    return {};
-                default:
-                    call(cycle, regs, mmu);
-                    return {};
-            }
+            call(cycle, regs, mmu);
+            return {};
         }
     };
 
@@ -1464,9 +1444,9 @@ namespace gameboy::cpu {
                     // Conditional: branching
                     if (!pred(regs)) {
                         // Skip the jump
-                        return {.cycle_adjustment{-3}};
+                        return {.cycle_adjustment{3}};
                     }
-                    return {};
+                    [[fallthrough]];
                 default:
                     call(cycle, regs, mmu);
                     return {};

@@ -19,6 +19,7 @@ namespace gameboy::cpu {
         void execute(const Instruction::Operation& func, int cycle);
         Instruction::SideEffect resolve_prefixed_instruction();
 
+        int m_cycle{0};
         Instruction instruction{};
         Registers regs{};
         bool interrupt_master_enable{};

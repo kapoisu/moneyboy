@@ -20,8 +20,6 @@ namespace gameboy::cpu {
 
     void Core::tick()
     {
-        static int m_cycle{0};
-
         execute(instruction.operation, m_cycle++);
 
         if (m_cycle == instruction.duration) {
@@ -1271,7 +1269,7 @@ namespace gameboy::cpu {
     void Core::execute(const Instruction::Operation& func, int cycle)
     {
         Instruction::SideEffect result{func(cycle, regs, *p_bus)};
-        instruction.duration += result.cycle_adjustment;
+        m_cycle += result.cycle_adjustment;
 
         if (result.ime_adjustment.has_value()) {
             interrupt_master_enable = result.ime_adjustment.value();
