@@ -22,6 +22,9 @@ namespace gameboy::io {
         else if (address >= 0xFF01 && address < 0xFF03) {
             return serial_port->read(address);
         }
+        else if (address >= 0xFF04 && address < 0xFF08) {
+            return timer_port->read(address);
+        }
         else if (address >= 0xFF40 && address < 0xFF4C) {
             return lcd_port->read(address);
         }
@@ -50,6 +53,9 @@ namespace gameboy::io {
         else if (address >= 0xFF01 && address < 0xFF03) {
             serial_port->write(address, value);
         }
+        else if (address >= 0xFF04 && address < 0xFF08) {
+            timer_port->write(address, value);
+        }
         else if (address >= 0xFF40 && address < 0xFF4C) {
             lcd_port->write(address, value);
         }
@@ -67,6 +73,11 @@ namespace gameboy::io {
     void Bus::connect_serial(std::shared_ptr<Port> p_serial)
     {
         serial_port = std::move(p_serial);
+    }
+
+    void Bus::connect_timer(std::shared_ptr<Port> p_timer)
+    {
+        timer_port = std::move(p_timer);
     }
 
     void Bus::connect_lcd(std::shared_ptr<Port> p_lcd)

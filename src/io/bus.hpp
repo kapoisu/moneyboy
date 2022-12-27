@@ -19,6 +19,7 @@ namespace gameboy::io {
         void write_byte(int address, std::uint8_t value);
 
         void connect_serial(std::shared_ptr<Port> p_serial);
+        void connect_timer(std::shared_ptr<Port> p_timer);
         void connect_lcd(std::shared_ptr<Port> p_lcd);
     private:
         cartridge::Banking cartridge_area; // 0x0000-0x7FFF
@@ -28,6 +29,7 @@ namespace gameboy::io {
         std::array<std::uint8_t, 0xFF80 - 0xFF00> ports{}; // 0xFF00-0xFF7F
         std::array<std::uint8_t, 65536> ram{};
         std::shared_ptr<Port> serial_port{};
+        std::shared_ptr<Port> timer_port{};
         std::shared_ptr<Port> lcd_port{};
     };
 

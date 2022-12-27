@@ -6,6 +6,7 @@
 #include "ppu/core.hpp"
 #include "ppu/lcd.hpp"
 #include "system/serial.hpp"
+#include "system/timer.hpp"
 #include "ui/window.hpp"
 
 namespace gameboy {
@@ -19,6 +20,7 @@ namespace gameboy {
         std::unique_ptr<cpu::Core> p_cpu{};
         std::unique_ptr<ppu::Core> p_ppu{};
         std::shared_ptr<system::Serial> p_serial{};
+        std::shared_ptr<system::Timer> p_timer{};
         std::shared_ptr<ppu::Lcd> p_lcd{};
 
         ui::WindowPtr p_game;
