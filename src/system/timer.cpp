@@ -21,7 +21,7 @@ namespace gameboy::system {
         counter = (counter + 1) % (std::numeric_limits<std::uint16_t>::max() + 1);
 
         // Divide the frequency depending on the clock selection within the TAC register.
-        auto new_signal{is_enabled() && ((counter % clock[timer_control % clock.size()]) == 0)};
+        bool new_signal{is_enabled() && ((counter % clock[timer_control % clock.size()]) == 0)};
         if (signal && !new_signal) {
             ++timer_counter;
         }
