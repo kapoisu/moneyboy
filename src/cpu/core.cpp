@@ -76,7 +76,7 @@ namespace gameboy::cpu {
             case 0x07:
                 return {
                     .opcode{opcode}, .name{"RLCA"}, .duration{1},
-                    .operation{Rrca{}}
+                    .operation{Rlca{}}
                 };
             case 0x08:
                 return {
@@ -1116,7 +1116,7 @@ namespace gameboy::cpu {
             case 0xD8:
                 return {
                     .opcode{opcode}, .name{"RET C"}, .duration{5},
-                    .operation{Ret{FlagPredicate<Flag::zero, true>{}}}
+                    .operation{Ret{FlagPredicate<Flag::carry, true>{}}}
                 };
             case 0xD9:
                 return {
@@ -1126,7 +1126,7 @@ namespace gameboy::cpu {
             case 0xDA:
                 return {
                     .opcode{opcode}, .name{"JP C, u16"}, .duration{4},
-                    .operation{Jp{FlagPredicate<Flag::zero, true>{}}}
+                    .operation{Jp{FlagPredicate<Flag::carry, true>{}}}
                 };
             case 0xDC:
                 return {
