@@ -19,6 +19,9 @@ namespace gameboy::io {
         else if (address < 0x9FFF) {
             return vram.read(address);
         }
+        else if (address >= 0xFF01 && address < 0xFF03) {
+            return serial_port->read(address);
+        }
         else if (address >= 0xFF40 && address < 0xFF4C) {
             return lcd_port->read(address);
         }
@@ -44,6 +47,9 @@ namespace gameboy::io {
         else if (address < 0x9FFF) {
             vram.write(address, value);
         }
+        else if (address >= 0xFF01 && address < 0xFF03) {
+            serial_port->write(address, value);
+        }
         else if (address >= 0xFF40 && address < 0xFF4C) {
             lcd_port->write(address, value);
         }
@@ -56,6 +62,11 @@ namespace gameboy::io {
         else {
             ram[address] = value;
         }
+    }
+
+    void Bus::connect_serial(std::shared_ptr<Port> p_serial)
+    {
+        serial_port = std::move(p_serial);
     }
 
     void Bus::connect_lcd(std::shared_ptr<Port> p_lcd)

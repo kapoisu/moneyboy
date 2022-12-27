@@ -14,6 +14,7 @@ namespace gameboy {
         auto game_renderer{ui::create_renderer(p_game, Scale{3.0}, Scale{3.0})};
         auto game_texture{ui::create_texture(game_renderer, Width{160}, Height{144})};
         p_lcd = std::make_shared<ppu::Lcd>(std::move(game_renderer), std::move(game_texture));
+        p_serial = std::make_shared<system::Serial>();
     }
 
     void Emulator::load_game()
@@ -31,6 +32,7 @@ namespace gameboy {
 #else
         auto p_address_bus{std::make_shared<Bus>(Banking{std::move(p_mbc)})};
 #endif
+        p_address_bus->connect_serial(p_serial);
         p_address_bus->connect_lcd(p_lcd);
         p_cpu = std::make_unique<cpu::Core>(p_address_bus);
         p_ppu = std::make_unique<ppu::Core>(p_address_bus);
@@ -63,6 +65,7 @@ namespace gameboy {
             }
 
             if (cycle < cycles_per_frame) {
+                p_serial->tick();
                 p_cpu->tick();
 
                 for (auto i{0}; i < 4; ++i) {
