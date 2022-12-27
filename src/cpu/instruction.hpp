@@ -1836,7 +1836,7 @@ namespace gameboy::cpu {
                 case 2: {
                         AluResult<std::uint8_t> result{shift_right_l(temp)};
                         mmu.write_byte(rr.get(), result.output);
-                        adjust_flag(regs, {result.output == 0, false, false, false});
+                        adjust_flag(regs, {result.output == 0, false, false, result.carry});
                     }
                     return {};
                 default:
