@@ -129,7 +129,7 @@ namespace gameboy::cpu {
     AluResult<T> shift_right_a(T a) requires std::unsigned_integral<T>
     {
         const auto lsb{a & 1};
-        const auto msb_mask{(1 << (sizeof(T) * 8 - 1)) - 1};
+        const auto msb_mask{1 << (sizeof(T) * 8 - 1)};
 
         return {
             .output{static_cast<T>((a & msb_mask) | (a >> 1))},
