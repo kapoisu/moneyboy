@@ -51,6 +51,7 @@ namespace gameboy::ppu {
     void Core::tick(Lcd& screen)
     {
         constexpr int oam_search_duration{80};
+        constexpr int cycles_per_scanline{456};
         constexpr int cycles_per_frame{70224};
 
         static int cycle{0};
@@ -83,7 +84,7 @@ namespace gameboy::ppu {
 
         */
 
-        if (cycle % Lcd::cycles_per_scanline == oam_search_duration && current_scanline < Lcd::scanlines_per_frame) {
+        if (cycle % cycles_per_scanline == oam_search_duration && current_scanline < Lcd::scanlines_per_frame) {
             constexpr int map_width{256_px};
             constexpr int map_height{256_px};
             const TileTrait tile_trait{.width{8_px}, .height{8_px}};

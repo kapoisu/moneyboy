@@ -34,7 +34,6 @@ namespace gameboy::ppu {
         virtual std::uint8_t read(int address) const override;
         virtual void write(int address, std::uint8_t value) override;
 
-        static constexpr int cycles_per_scanline{456};
         static constexpr int pixels_per_scanline{160};
         static constexpr int scanlines_per_frame{144};
     private:

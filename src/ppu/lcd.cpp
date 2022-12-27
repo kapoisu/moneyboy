@@ -74,7 +74,7 @@ namespace gameboy::ppu {
            Note that this implementation may not show the same colors as a DMG model does,
            because I can't find resources which define the actual RGB value of the 4 color IDs.
         */
-        static std::array<std::uint8_t, 4> gray_shade{255, 211, 169, 0}; // white, light gray, dark gray, black
+        static const std::array<std::uint8_t, 4> gray_shade{255, 211, 169, 0}; // white, light gray, dark gray, black
 
         auto palette{registers.at(bgp)}; // background color palette, where each element refers to a color ID
 
@@ -83,22 +83,24 @@ namespace gameboy::ppu {
 
     void Lcd::update()
     {
-        constexpr int ly_modulo{154};
+        constexpr int x_modulus{114};
+        constexpr int ly_modulus{154};
+        constexpr int bytes_per_pixel{4};
         static int counter_x{0};
 
         if (!is_enabled()) {
             return;
         }
 
-        counter_x = (counter_x + 1) % (cycles_per_scanline / 4);
+        counter_x = (counter_x + 1) % x_modulus;
         if (counter_x == 0) {
-            registers[ly] = static_cast<std::uint8_t>((registers[ly] + 1) % ly_modulo);
+            registers[ly] = static_cast<std::uint8_t>((registers[ly] + 1) % ly_modulus);
         }
 
         if (registers[ly] == scanlines_per_frame && counter_x == 0) {
             SDL_SetRenderDrawColor(p_renderer.get(), 0xFF, 0xFF, 0xFF, 0xFF);
             SDL_RenderClear(p_renderer.get());
-            SDL_UpdateTexture(p_texture.get(), nullptr, frame_buffer.data(), 160 * 4);
+            SDL_UpdateTexture(p_texture.get(), nullptr, frame_buffer.data(), pixels_per_scanline * bytes_per_pixel);
             SDL_RenderCopy(p_renderer.get(), p_texture.get(), nullptr, nullptr);
             SDL_RenderPresent(p_renderer.get());
         }
@@ -122,7 +124,6 @@ namespace gameboy::ppu {
         address -= 0xFF40;
         switch (address) {
             case ly:
-                registers[address] = 0;
                 return;
             default:
                 registers[address] = value;
