@@ -90,7 +90,11 @@ namespace gameboy::cpu {
     struct Halt {
         Instruction::SideEffect operator()(int, Registers&, gameboy::io::Bus& mmu)
         {
-            return {};
+            if (has_pending_interrupt(mmu)) {
+                return {.halt_attempt{TryHalt{false}}};
+            }
+
+            return {.cycle_adjustment{-1}, .halt_attempt{TryHalt{true}}};
         }
     };
 
