@@ -27,9 +27,20 @@ namespace gameboy::system {
         void check_signal() const;
 
         mutable bool signal{true};
-        std::bitset<8> button_pressed{0x00000000};
-        std::bitset<8> direction_pressed{0x00000000};
-        std::bitset<8> joypad_control{0x11000000};
+        std::bitset<8> button_pressed{0b0000'0000};
+        std::bitset<8> direction_pressed{0b0000'0000};
+
+        /*
+            bit 7: Not used
+            bit 6: Not used
+            bit 5: Select Button Keys      (0=Select)
+            bit 4: Select Direction Keys   (0=Select)
+            bit 3: Input Down  or Start    (0=Pressed) (Read Only)
+            bit 2: Input Up    or Select   (0=Pressed) (Read Only)
+            bit 1: Input Left  or Button B (0=Pressed) (Read Only)
+            bit 0: Input Right or Button A (0=Pressed) (Read Only)
+        */
+        std::bitset<8> joypad_control{0b1100'0000};
     };
 }
 

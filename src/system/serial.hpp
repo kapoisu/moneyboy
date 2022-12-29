@@ -15,7 +15,12 @@ namespace gameboy::system {
     private:
         int counter{};
         char transfer_data{};
-        std::uint8_t transfer_control{0x7E};
+
+        /*
+            bit 7: Transfer Start Flag (0=No Transfer, 1=Start)
+            bit 0: Shift Clock (0=External Clock, 1=Internal Clock)
+        */
+        std::uint8_t transfer_control{0b0111'1110};
     };
 }
 

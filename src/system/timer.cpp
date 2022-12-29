@@ -20,8 +20,9 @@ namespace gameboy::system {
         // The divider counter isn't affected by the timer enable bit within the TAC register.
         counter = (counter + 1) % (std::numeric_limits<std::uint16_t>::max() + 1);
 
-        // Divide the frequency depending on the clock selection within the TAC register.
-        bool new_signal{is_enabled() && ((counter % clock[timer_control % clock.size()]) == 0)};
+        // Divide the frequency depending on the clock selection from the TAC register.
+        bool times_up{(counter % clock[timer_control % clock.size()]) == 0};
+        bool new_signal{is_enabled() && times_up};
         if (signal && !new_signal) {
             ++timer_counter;
         }
@@ -81,7 +82,7 @@ namespace gameboy::system {
                 timer_modulus = value;
                 return;
             case tac:
-                timer_control = value | 0xF8;
+                timer_control = value | 0b1111'1000;
                 return;
             default:
                 throw std::out_of_range{"Invalid address."};

@@ -41,13 +41,14 @@ namespace gameboy::system {
 
     void Joypad::write(int address, std::uint8_t value)
     {
-        joypad_control = value & 0b00110000;
+        joypad_control = value & 0b0011'0000;
         check_signal();
     }
 
     void Joypad::check_signal() const
     {
-        bool new_signal{(read(0xFF00) & 0x0F) != 0x0F};
+        // Check if any of the lower 4 bits is 0
+        bool new_signal{(read(0xFF00) & 0b0000'1111) != 0b0000'1111};
         if (signal && !new_signal) {
             // Interrupt
         }
