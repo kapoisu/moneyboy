@@ -28,11 +28,17 @@ namespace gameboy::io {
         else if (address >= 0xFF04 && address < 0xFF08) {
             return timer_port->read(address);
         }
+        else if (address == 0xFF0F) {
+            return interrupt_port->read(address);
+        }
         else if (address >= 0xFF40 && address < 0xFF4C) {
             return lcd_port->read(address);
         }
         else if (address >= 0xFF4D && address < 0xFF80) {
             return ports[address - 0xFF00];
+        }
+        else if (address == 0xFFFF) {
+            return interrupt_enable;
         }
         else if (address < 0x10000) {
             return ram[address];
@@ -62,6 +68,9 @@ namespace gameboy::io {
         else if (address >= 0xFF04 && address < 0xFF08) {
             timer_port->write(address, value);
         }
+        else if (address == 0xFF0F) {
+            interrupt_port->write(address, value);
+        }
         else if (address >= 0xFF40 && address < 0xFF4C) {
             lcd_port->write(address, value);
         }
@@ -70,6 +79,9 @@ namespace gameboy::io {
         }
         else if (address >= 0xFF4D && address < 0xFF80) {
             ports[address - 0xFF4D] = value;
+        }
+        else if (address == 0xFFFF) {
+            interrupt_enable = value;
         }
         else {
             ram[address] = value;
@@ -89,6 +101,11 @@ namespace gameboy::io {
     void Bus::connect_timer(std::shared_ptr<Port> p_timer)
     {
         timer_port = std::move(p_timer);
+    }
+
+    void Bus::connect_interrupt(std::shared_ptr<Port> p_interrupt)
+    {
+        interrupt_port = std::move(p_interrupt);
     }
 
     void Bus::connect_lcd(std::shared_ptr<Port> p_lcd)

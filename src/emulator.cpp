@@ -1,6 +1,7 @@
 #include "emulator.hpp"
 #include "cartridge/banking.hpp"
 #include "io/bus.hpp"
+#include "system/interrupt.hpp"
 #include <chrono>
 #include <iostream>
 
@@ -14,9 +15,6 @@ namespace gameboy {
         auto game_renderer{ui::create_renderer(p_game, Scale{3.0}, Scale{3.0})};
         auto game_texture{ui::create_texture(game_renderer, Width{160}, Height{144})};
         p_lcd = std::make_shared<ppu::Lcd>(std::move(game_renderer), std::move(game_texture));
-        p_joypad = std::make_shared<system::Joypad>();
-        p_serial = std::make_shared<system::Serial>();
-        p_timer = std::make_shared<system::Timer>();
     }
 
     void Emulator::load_game()
@@ -34,9 +32,14 @@ namespace gameboy {
 #else
         auto p_address_bus{std::make_shared<Bus>(Banking{std::move(p_mbc)})};
 #endif
+        auto p_interrupt{std::make_shared<system::Interrupt>()};
+        p_joypad = std::make_shared<system::Joypad>(p_interrupt);
+        p_serial = std::make_shared<system::Serial>(p_interrupt);
+        p_timer = std::make_shared<system::Timer>(p_interrupt);
         p_address_bus->connect_joypad(p_joypad);
         p_address_bus->connect_serial(p_serial);
         p_address_bus->connect_timer(p_timer);
+        p_address_bus->connect_interrupt(p_interrupt);
         p_address_bus->connect_lcd(p_lcd);
         p_cpu = std::make_unique<cpu::Core>(p_address_bus);
         p_ppu = std::make_unique<ppu::Core>(p_address_bus);

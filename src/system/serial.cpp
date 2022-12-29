@@ -10,6 +10,10 @@ namespace gameboy::system {
         sc = 0xFF02
     };
 
+    Serial::Serial(std::shared_ptr<Interrupt> shared_interrupt) : p_interrupt{std::move(shared_interrupt)}
+    {
+    }
+
     void Serial::tick()
     {
         static const std::array<int, 4> clock{128, 64, 4, 2};

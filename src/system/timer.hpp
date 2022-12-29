@@ -2,11 +2,14 @@
 #define SYSTEM_TIMER_H
 
 #include <cstdint>
+#include <memory>
 #include "io/port.hpp"
+#include "interrupt.hpp"
 
 namespace gameboy::system {
     class Timer : public io::Port {
     public:
+        Timer(std::shared_ptr<Interrupt> shared_interrupt);
         void tick();
         bool is_enabled() const;
         std::uint8_t get_divider() const;
@@ -27,6 +30,8 @@ namespace gameboy::system {
                 11:  16384 Hz
         */
         std::uint8_t timer_control{0b1111'1000};
+
+        std::shared_ptr<Interrupt> p_interrupt;
     };
 }
 

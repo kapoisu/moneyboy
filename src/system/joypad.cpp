@@ -7,6 +7,10 @@ namespace gameboy::system {
         button = 5
     };
 
+    Joypad::Joypad(std::shared_ptr<Interrupt> shared_interrupt) : p_interrupt{std::move(shared_interrupt)}
+    {
+    }
+
     void Joypad::press(Input option)
     {
         if (option == Input::right || option == Input::left || option == Input::up || option == Input::down) {

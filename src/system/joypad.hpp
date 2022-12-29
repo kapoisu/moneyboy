@@ -3,7 +3,9 @@
 
 #include <bitset>
 #include <cstdint>
+#include <memory>
 #include "io/bus.hpp"
+#include "interrupt.hpp"
 
 namespace gameboy::system {
     class Joypad : public io::Port {
@@ -19,6 +21,7 @@ namespace gameboy::system {
             down = 7
         };
 
+        Joypad(std::shared_ptr<Interrupt> shared_interrupt);
         void press(Input option);
 
         virtual std::uint8_t read(int address) const override;
@@ -41,6 +44,8 @@ namespace gameboy::system {
             bit 0: Input Right or Button A (0=Pressed) (Read Only)
         */
         std::bitset<8> joypad_control{0b1100'0000};
+
+        std::shared_ptr<Interrupt> p_interrupt;
     };
 }
 
