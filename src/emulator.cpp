@@ -6,6 +6,28 @@
 #include <iostream>
 
 namespace gameboy {
+    using Clock = std::chrono::steady_clock;
+    using Timestamp = std::chrono::time_point<Clock>;
+
+    class Performance {
+    public:
+        void add_frame(const Timestamp& start, const Timestamp& end)
+        {
+            ++count;
+            sum += static_cast<double>((end - start).count());
+        }
+        void show_average() const
+        {
+            constexpr int frequency{100};
+            if (count % frequency == 0) {
+                std::cout << "Average execution time per frame: "  << (sum / count) << "\n";
+            }
+        }
+    private:
+        int count{};
+        double sum{};
+    };
+
     using namespace ui;
 
     Emulator::Emulator()
@@ -48,11 +70,9 @@ namespace gameboy {
     void Emulator::run()
     {
         load_game();
-        using Clock = std::chrono::steady_clock;
-        using Timestamp = std::chrono::time_point<Clock>;
 
         constexpr int cycles_per_frame{70224};
-        auto enough_time = [cycles_per_frame](const Timestamp& prev, const Timestamp& current) -> bool {
+        auto sync = [cycles_per_frame](const Timestamp& prev, const Timestamp& current) -> bool {
             using Seconds = std::chrono::duration<double, std::chrono::seconds::period>;
             static constexpr double frequency{4.194304e6};
 
@@ -60,6 +80,7 @@ namespace gameboy {
             return current - prev >= seconds_per_frame;
         };
 
+        Performance checker{};
         Timestamp prev{Clock::now()};
         int cycle{};
         bool quit{false};
@@ -87,11 +108,18 @@ namespace gameboy {
                 }
 
                 p_lcd->update();
-                cycle += 4;
             }
 
-            if (Timestamp current{Clock::now()}; cycle == cycles_per_frame) {
-                if (enough_time(prev, current)) {
+            cycle += 4;
+
+            if (cycle >= cycles_per_frame) {
+                Timestamp current{Clock::now()};
+                if (cycle == cycles_per_frame) {
+                    checker.add_frame(prev, current);
+                    checker.show_average();
+                }
+
+                if (sync(prev, current)) {
                     prev = current;
                     cycle = 0;
                 }
