@@ -25,7 +25,9 @@ namespace gameboy {
         std::shared_ptr<system::Timer> p_timer{};
         std::shared_ptr<ppu::Lcd> p_lcd{};
 
-        ui::WindowPtr p_game;
+        ui::WindowPtr p_game_window;
+        ui::RendererPtr p_game_renderer;
+        ui::TexturePtr p_game_texture;
     };
 
     template<SDL_EventType N, bool Pressed = (N == SDL_KEYDOWN)>

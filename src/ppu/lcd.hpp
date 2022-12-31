@@ -36,7 +36,7 @@ namespace gameboy::ppu {
 
     class Lcd : public io::Port {
     public:
-        Lcd(ui::RendererPtr p_rend, ui::TexturePtr p_text);
+        Lcd();
         int background_map_selection() const;
         int data_region_selection() const;
         bool is_enabled() const;
@@ -44,7 +44,7 @@ namespace gameboy::ppu {
         std::uint8_t get_scroll_x() const;
         std::uint8_t get_y_coordinate() const;
         std::uint8_t get_background_color(int index) const;
-        void update();
+        void update(SDL_Renderer& renderer, SDL_Texture& texture);
         void push_data(Pixel pixel);
 
         virtual std::uint8_t read(int address) const override;
@@ -56,8 +56,6 @@ namespace gameboy::ppu {
         std::array<std::uint8_t, pixels_per_scanline * scanlines_per_frame * 4> frame_buffer{};
         Registers regs{};
 
-        ui::RendererPtr p_renderer;
-        ui::TexturePtr p_texture;
     };
 }
 

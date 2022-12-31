@@ -31,12 +31,10 @@ namespace gameboy {
     using namespace ui;
 
     Emulator::Emulator()
-        : p_game{ui::create_window("Money Boy", Width{480}, Height{432})}
-        //, p_tile{ui::create_window("Tile Data", Width{512}, Height{512})}
+        : p_game_window{ui::create_window("Money Boy", Width{480}, Height{432})}
+        , p_game_renderer{ui::create_renderer(p_game_window, Scale{3.0}, Scale{3.0})}
+        , p_game_texture{ui::create_texture(p_game_renderer, Width{160}, Height{144})}
     {
-        auto game_renderer{ui::create_renderer(p_game, Scale{3.0}, Scale{3.0})};
-        auto game_texture{ui::create_texture(game_renderer, Width{160}, Height{144})};
-        p_lcd = std::make_shared<ppu::Lcd>(std::move(game_renderer), std::move(game_texture));
     }
 
     void Emulator::load_game()
@@ -58,6 +56,7 @@ namespace gameboy {
         p_joypad = std::make_shared<system::Joypad>(p_interrupt);
         p_serial = std::make_shared<system::Serial>(p_interrupt);
         p_timer = std::make_shared<system::Timer>(p_interrupt);
+        p_lcd = std::make_shared<ppu::Lcd>();
         p_address_bus->connect_joypad(p_joypad);
         p_address_bus->connect_serial(p_serial);
         p_address_bus->connect_timer(p_timer);
@@ -107,7 +106,7 @@ namespace gameboy {
                     p_ppu->tick(*p_lcd);
                 }
 
-                p_lcd->update();
+                p_lcd->update(*p_game_renderer, *p_game_texture);
             }
 
             cycle += 4;

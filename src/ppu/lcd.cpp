@@ -13,7 +13,7 @@ namespace gameboy::ppu {
         lcd_display = 7
     };
 
-    Lcd::Lcd(ui::RendererPtr p_rend, ui::TexturePtr p_text) : p_renderer{std::move(p_rend)}, p_texture{std::move(p_text)}
+    Lcd::Lcd()
     {
     }
 
@@ -57,11 +57,10 @@ namespace gameboy::ppu {
         return gray_shade[(regs.background_palette >> (index * 2)) & 0b00000011]; // each color is represented by 2 bits
     }
 
-    void Lcd::update()
+    void Lcd::update(SDL_Renderer& renderer, SDL_Texture& texture)
     {
         constexpr int x_modulus{114};
         constexpr int ly_modulus{154};
-        constexpr int bytes_per_pixel{4};
         static int counter_x{0};
 
         if (!is_enabled()) {
@@ -74,11 +73,7 @@ namespace gameboy::ppu {
         }
 
         if (regs.ly == scanlines_per_frame && counter_x == 0) {
-            SDL_SetRenderDrawColor(p_renderer.get(), 0xFF, 0xFF, 0xFF, 0xFF);
-            SDL_RenderClear(p_renderer.get());
-            SDL_UpdateTexture(p_texture.get(), nullptr, frame_buffer.data(), pixels_per_scanline * bytes_per_pixel);
-            SDL_RenderCopy(p_renderer.get(), p_texture.get(), nullptr, nullptr);
-            SDL_RenderPresent(p_renderer.get());
+            ui::render<Lcd::pixels_per_scanline, Lcd::scanlines_per_frame>(renderer, texture, frame_buffer);
         }
     }
 

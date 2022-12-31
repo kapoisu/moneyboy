@@ -1,6 +1,7 @@
 #ifndef UI_WINDOW_H
 #define UI_WINDOW_H
 
+#include <array>
 #include <memory>
 #include "SDL.h"
 
@@ -38,6 +39,16 @@ namespace gameboy::ui {
     WindowPtr create_window(std::string_view title, Width width, Height height);
     RendererPtr create_renderer(WindowPtr& window, Scale horizontal, Scale vertical);
     TexturePtr create_texture(RendererPtr& renderer, Width width, Height height);
+
+    template<int W, int H, int BytesPerPixel = 4>
+    void render(SDL_Renderer& renderer, SDL_Texture& texture, const std::array<std::uint8_t, W * H * BytesPerPixel>& buffer)
+    {
+        SDL_SetRenderDrawColor(&renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+        SDL_RenderClear(&renderer);
+        SDL_UpdateTexture(&texture, nullptr, buffer.data(), W * BytesPerPixel);
+        SDL_RenderCopy(&renderer, &texture, nullptr, nullptr);
+        SDL_RenderPresent(&renderer);
+    }
 }
 
 #endif
