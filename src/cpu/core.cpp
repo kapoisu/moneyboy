@@ -55,7 +55,7 @@ namespace gameboy::cpu {
 
     void Core::tick()
     {
-        execute(instruction.operation, m_cycle++);
+        execute(instruction.operation);
 
         if (m_cycle == instruction.duration) {
             auto opcode{p_bus->read_byte(regs.program_counter++)};
@@ -1303,9 +1303,9 @@ namespace gameboy::cpu {
         }
     }
 
-    void Core::execute(const Instruction::Operation& func, int cycle)
+    void Core::execute(const Instruction::Operation& func)
     {
-        Instruction::SideEffect result{func(cycle, regs, *p_bus)};
+        Instruction::SideEffect result{func(m_cycle++, regs, *p_bus)};
         m_cycle += result.cycle_adjustment;
 
         if (result.ime_adjustment.has_value()) {
