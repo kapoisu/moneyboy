@@ -1,6 +1,7 @@
 #include "core.hpp"
 #include <array>
-#include <chrono>
+#include <bitset>
+#include <cstdint>
 #include <string>
 #include <iostream>
 
@@ -12,6 +13,40 @@ namespace gameboy::cpu {
         }
 
         return {.cycle_adjustment{-1}};
+    }
+
+    Instruction::SideEffect handle_interrupt(int cycle, Registers& regs, gameboy::io::Bus& mmu)
+    {
+        static auto reset_flag{[](gameboy::io::Bus& mmu, std::bitset<8>& flag, int bit){
+            flag.reset(bit);
+            mmu.write_byte(0xFF0F, static_cast<std::uint8_t>(flag.to_ulong()));
+        }};
+
+        switch (cycle) {
+            case 2:
+                mmu.write_byte(--regs.sp, regs.program_counter.get_high());
+                return {};
+            case 3:
+                mmu.write_byte(--regs.sp, regs.program_counter.get_low<std::uint8_t>());
+                return {};
+            case 4: {
+                    regs.program_counter.set_high(0);
+                    std::uint8_t flag{mmu.read_byte(0xFF0F)};
+                    std::bitset<8> view{static_cast<uint8_t>(mmu.read_byte(0xFFFF) & flag)};
+
+                    for (auto i{0}; i < 5; ++i) {
+                        if (view.test(i)) {
+                            flag = static_cast<std::uint8_t>(flag & ~(1 << i));
+                            mmu.write_byte(0xFF0F, flag);
+                            regs.program_counter.set_low(static_cast<std::uint8_t>(0x40 + i * 0x08));
+                            break;
+                        }
+                    }
+                }
+                return {};
+            default:
+                return {};
+        }
     }
 
     Core::Core(std::shared_ptr<gameboy::io::Bus> shared_bus) : p_bus{std::move(shared_bus)}
@@ -26,6 +61,8 @@ namespace gameboy::cpu {
             auto opcode{p_bus->read_byte(regs.program_counter++)};
             instruction = decode(opcode);
             m_cycle = 0;
+
+            check_interrupt();
         }
     }
 
@@ -2579,5 +2616,17 @@ namespace gameboy::cpu {
         }
 
         return {};
+    }
+
+    void Core::check_interrupt()
+    {
+        if (interrupt_master_enable && has_pending_interrupt(*p_bus)) {
+            --regs.program_counter;
+            interrupt_master_enable = false;
+            instruction = {
+                .opcode{}, .name{"ISR"}, .duration{5},
+                .operation{handle_interrupt}
+            };
+        }
     }
 }

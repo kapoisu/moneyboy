@@ -18,6 +18,7 @@ namespace gameboy::cpu {
         Instruction decode(int opcode);
         void execute(const Instruction::Operation& func, int cycle);
         Instruction::SideEffect resolve_prefixed_instruction();
+        void check_interrupt();
 
         int m_cycle{0};
         Instruction instruction{};
