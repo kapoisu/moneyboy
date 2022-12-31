@@ -1320,7 +1320,7 @@ namespace gameboy::cpu {
         m_cycle += result.cycle_adjustment;
 
         if (result.ime_adjustment.has_value()) {
-            interrupt_master_enable = result.ime_adjustment.value();
+            interrupt_master_enable = *result.ime_adjustment;
         }
 
         if (result.halt_attempt.has_value()) {
