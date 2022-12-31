@@ -1,12 +1,13 @@
 #include "mbc.hpp"
 #include <algorithm>
 #include <fstream>
-#include <iterator>
+#include <iostream>
 #include <stdexcept>
 
 namespace gameboy::cartridge {
     Rom::Rom(const std::string& file_name)
     {
+        std::cout << "Load Cartridge: " << file_name << "\n";
         std::ifstream file{file_name, std::ios::binary};
 
         static constexpr int bank_size{0x4000};
@@ -34,13 +35,19 @@ namespace gameboy::cartridge {
 
     void Mbc::write(int address, std::uint8_t value)
     {
-        throw std::runtime_error{"You shouldn't modify the cartridge ROM."};
+        //throw std::runtime_error{"You shouldn't modify the cartridge ROM."};
     }
 
     std::unique_ptr<Mbc> create_mbc(std::unique_ptr<Rom> p_cartridge)
     {
-        switch (p_cartridge->banks[0][0x0147]) {
+        int type{p_cartridge->banks[0][0x0147]};
+        std::cout << "Create MBC: ";
+        switch (type) {
+            case 0x01:
+                std::cout << "MBC1\n";
+                return std::make_unique<Mbc>(std::move(p_cartridge));
             default:
+                std::cout << "ROM ONLY\n";
                 return std::make_unique<Mbc>(std::move(p_cartridge));
         }
     }
