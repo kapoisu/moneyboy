@@ -12,6 +12,7 @@ namespace gameboy::cpu {
     public:
         explicit Core(std::shared_ptr<io::Bus> shared_bus);
         void tick();
+        void preboot();
         void test();
 
     private:

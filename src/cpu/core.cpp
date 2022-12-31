@@ -66,6 +66,17 @@ namespace gameboy::cpu {
         }
     }
 
+    void Core::preboot()
+    {
+        regs.af.set_high(0x01);
+        regs.af.set_low(FlagRegister{0xB0});
+        regs.bc = 0x0013;
+        regs.de = 0x00D8;
+        regs.hl = 0x014D;
+        regs.sp = 0xFFFE;
+        regs.program_counter = 0x0100;
+    }
+
     Instruction Core::decode(int opcode)
     {
         static constexpr auto with_flag{true};
