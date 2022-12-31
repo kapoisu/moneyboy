@@ -33,11 +33,11 @@ namespace gameboy::system {
         std::bitset<8> output{joypad_control};
 
         if (!joypad_control.test(direction)) {
-            output &= ~direction_pressed;
+            output |= ~direction_pressed;
         }
 
         if (!joypad_control.test(button)) {
-            output &= ~button_pressed;
+            output |= ~button_pressed;
         }
 
         return static_cast<std::uint8_t>(output.to_ulong());
@@ -45,7 +45,7 @@ namespace gameboy::system {
 
     void Joypad::write(int address, std::uint8_t value)
     {
-        joypad_control = value & 0b0011'0000;
+        joypad_control = value | 0b1100'0000;
         check_signal();
     }
 
@@ -54,7 +54,7 @@ namespace gameboy::system {
         // Check if any of the lower 4 bits is 0
         bool new_signal{(read(0xFF00) & 0b0000'1111) != 0b0000'1111};
         if (signal && !new_signal) {
-            // Interrupt
+            (*p_interrupt)(Interrupt::joypad);
         }
 
         signal = new_signal;

@@ -30,8 +30,8 @@ namespace gameboy::system {
         void check_signal() const;
 
         mutable bool signal{true};
-        std::bitset<8> button_pressed{0b0000'0000};
-        std::bitset<8> direction_pressed{0b0000'0000};
+        std::bitset<8> button_pressed{0b1111'0000};
+        std::bitset<8> direction_pressed{0b1111'0000};
 
         /*
             bit 7: Not used
