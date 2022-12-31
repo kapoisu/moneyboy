@@ -2,6 +2,7 @@
 #define PPU_LCD_H
 
 #include <array>
+#include <bitset>
 #include <cstdint>
 #include <memory>
 #include "io/port.hpp"
@@ -16,6 +17,21 @@ namespace gameboy::ppu {
     struct Pixel {
         Position pos;
         std::uint8_t color;
+    };
+
+    struct Registers {
+        std::bitset<8> control;
+        std::bitset<8> status{0b1000'0000};
+        std::uint8_t scroll_y;
+        std::uint8_t scroll_x;
+        std::uint8_t ly;
+        std::uint8_t ly_compare;
+        std::uint8_t dma_transfer{0b1111'1111};
+        std::uint8_t background_palette;
+        std::uint8_t object_palette_0;
+        std::uint8_t object_palette_1;
+        std::uint8_t window_y;
+        std::uint8_t window_x;
     };
 
     class Lcd : public io::Port {
@@ -38,7 +54,7 @@ namespace gameboy::ppu {
         static constexpr int scanlines_per_frame{144};
     private:
         std::array<std::uint8_t, pixels_per_scanline * scanlines_per_frame * 4> frame_buffer{};
-        std::array<std::uint8_t, 12> registers{};
+        Registers regs{};
 
         ui::RendererPtr p_renderer;
         ui::TexturePtr p_texture;
