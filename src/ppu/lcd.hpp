@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <memory>
 #include "io/port.hpp"
+#include "system/interrupt.hpp"
 #include "ui/window.hpp"
 
 namespace gameboy::ppu {
@@ -36,7 +37,7 @@ namespace gameboy::ppu {
 
     class Lcd : public io::Port {
     public:
-        Lcd();
+        Lcd(std::shared_ptr<system::Interrupt> shared_interrupt);
         int background_map_selection() const;
         int data_region_selection() const;
         bool is_enabled() const;
@@ -53,9 +54,12 @@ namespace gameboy::ppu {
         static constexpr int pixels_per_scanline{160};
         static constexpr int scanlines_per_frame{144};
     private:
+        void check_status(int x, int y);
+
         std::array<std::uint8_t, pixels_per_scanline * scanlines_per_frame * 4> frame_buffer{};
         Registers regs{};
 
+        std::shared_ptr<system::Interrupt> p_interrupt;
     };
 }
 

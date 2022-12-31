@@ -13,7 +13,15 @@ namespace gameboy::ppu {
         lcd_display = 7
     };
 
-    Lcd::Lcd()
+    enum Status {
+        coincidence_flag = 2,
+        mode_0_interrupt = 3,
+        mode_1_interrupt = 4,
+        mode_2_interrupt = 5,
+        coincidence_interrupt = 6
+    };
+
+    Lcd::Lcd(std::shared_ptr<system::Interrupt> shared_interrupt) : p_interrupt{std::move(shared_interrupt)}
     {
     }
 
@@ -64,17 +72,47 @@ namespace gameboy::ppu {
         static int counter_x{0};
 
         if (!is_enabled()) {
+            regs.status &= 0b1111'1100;
+            regs.ly = 0;
+            counter_x = 0;
             return;
         }
 
-        counter_x = (counter_x + 1) % x_modulus;
-        if (counter_x == 0) {
+        if (!regs.control.test(background_display)) {
+            frame_buffer.fill(0xFF);
+        }
+
+        ++counter_x;
+        if (counter_x == x_modulus) {
+            counter_x = 0;
             regs.ly = static_cast<std::uint8_t>((regs.ly + 1) % ly_modulus);
         }
 
+        regs.status.set(coincidence_flag, regs.ly == regs.ly_compare);
+
+        // mode 0
+        if (regs.ly < scanlines_per_frame && counter_x >= (20 + 43)) {
+            regs.status = (regs.status.to_ulong() & 0b1111'1100) + 0;
+        }
+
+        // mode 1
         if (regs.ly == scanlines_per_frame && counter_x == 0) {
+            regs.status = (regs.status.to_ulong() & 0b1111'1100) + 1;
+            (*p_interrupt)(system::Interrupt::vblank);
             ui::render<Lcd::pixels_per_scanline, Lcd::scanlines_per_frame>(renderer, texture, frame_buffer);
         }
+
+        // mode 2
+        if (regs.ly < scanlines_per_frame && counter_x == 0) {
+            regs.status = (regs.status.to_ulong() & 0b1111'1100) + 2;
+        }
+
+        // mode 3
+        if (regs.ly < scanlines_per_frame && counter_x == 20) {
+            regs.status = (regs.status.to_ulong() & 0b1111'1100) + 3;
+        }
+
+        check_status(counter_x, regs.ly);
     }
 
     void Lcd::push_data(Pixel pixel)
@@ -158,5 +196,23 @@ namespace gameboy::ppu {
             default:
                 throw std::out_of_range{"Invalid address."};
         }
+    }
+
+    void Lcd::check_status(int x, int y)
+    {
+        static bool signal{false};
+
+        bool new_signal{
+            ((regs.ly == regs.ly_compare && regs.status[coincidence_interrupt])) ||
+            ((regs.status.to_ulong() % 4 == 0) && regs.status[mode_0_interrupt]) ||
+            ((regs.status.to_ulong() % 4 == 1) && regs.status[mode_1_interrupt]) ||
+            ((regs.status.to_ulong() % 4 == 2) && regs.status[mode_2_interrupt])
+        };
+
+        if (new_signal && !signal) {
+            (*p_interrupt)(system::Interrupt::lcd_stat);
+        }
+
+        signal = new_signal;
     }
 }

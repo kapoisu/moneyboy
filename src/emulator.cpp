@@ -56,7 +56,7 @@ namespace gameboy {
         p_joypad = std::make_shared<system::Joypad>(p_interrupt);
         p_serial = std::make_shared<system::Serial>(p_interrupt);
         p_timer = std::make_shared<system::Timer>(p_interrupt);
-        p_lcd = std::make_shared<ppu::Lcd>();
+        p_lcd = std::make_shared<ppu::Lcd>(p_interrupt);
         p_address_bus->connect_joypad(p_joypad);
         p_address_bus->connect_serial(p_serial);
         p_address_bus->connect_timer(p_timer);
