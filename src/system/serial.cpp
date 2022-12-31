@@ -22,17 +22,37 @@ namespace gameboy::system {
 
     void Serial::tick()
     {
-        static const std::array<int, 4> clock{128, 64, 4, 2};
+        static constexpr int clock{128};
+        static bool signal{false};
+        static int bit_count{0};
 
-        ++counter;
-
-        if (is_transfering() && ((counter % clock[transfer_control % clock.size()]) == 0)) {
-            std::cout << transfer_data;
-            transfer_control = transfer_control & 0b01111111;
-            // Interrupt
+        counter = (counter + 1) % (std::numeric_limits<std::uint8_t>::max() + 1);
+        bool times_up{(counter % clock) == 0};
+        bool new_signal{is_sender() && times_up};
+        if (signal && !new_signal) {
+            /*
+                In theory, the serial component has to set the transfering flag by itself.
+                However, we don't have a way to detect if there's any data queueing.
+                We resort to the value written by user programs.
+            */
+            if (is_transfering()) {
+                ++bit_count;
+                if (bit_count == 8) {
+                    /*
+                        Although the CPU writes one byte at a time, the actual transfering
+                        to another device is done by shifting out one bit per falling edge.
+                    */
+                    std::cout << transfer_data;
+                    bit_count = 0;
+                    transfer_control.reset(transfering);
+                    (*p_interrupt)(Interrupt::serial);
+                }
+            }
 
             counter = 0;
         };
+
+        signal = new_signal;
     }
 
     bool Serial::is_transfering() const
