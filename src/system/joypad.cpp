@@ -11,14 +11,14 @@ namespace gameboy::system {
     {
     }
 
-    void Joypad::press(Input option)
+    void Joypad::press(Input option, bool pressed)
     {
         if (option == Input::right || option == Input::left || option == Input::up || option == Input::down) {
-            direction_pressed.set(option % 4);
+            direction_pressed.set(option % 4, pressed);
         }
 
         if (option == Input::a || option == Input::b || option == Input::select || option == Input::start) {
-            button_pressed.set(option % 4);
+            button_pressed.set(option % 4, pressed);
         }
 
         check_signal();

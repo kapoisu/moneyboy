@@ -36,28 +36,28 @@ namespace gameboy {
         using system::Joypad;
         switch (key) {
             case SDL_KeyCode::SDLK_DOWN:
-                handle.press(Joypad::Input::down);
+                handle.press(Joypad::Input::down, Pressed);
                 return;
             case SDL_KeyCode::SDLK_RETURN:
-                handle.press(Joypad::Input::start);
+                handle.press(Joypad::Input::start, Pressed);
                 return;
             case SDL_KeyCode::SDLK_UP:
-                handle.press(Joypad::Input::up);
+                handle.press(Joypad::Input::up, Pressed);
                 return;
             case SDL_KeyCode::SDLK_BACKSPACE:
-                handle.press(Joypad::Input::select);
+                handle.press(Joypad::Input::select, Pressed);
                 return;
             case SDL_KeyCode::SDLK_LEFT:
-                handle.press(Joypad::Input::left);
+                handle.press(Joypad::Input::left, Pressed);
                 return;
             case SDL_KeyCode::SDLK_x:
-                handle.press(Joypad::Input::b);
+                handle.press(Joypad::Input::b, Pressed);
                 return;
             case SDL_KeyCode::SDLK_RIGHT:
-                handle.press(Joypad::Input::right);
+                handle.press(Joypad::Input::right, Pressed);
                 return;
             case SDL_KeyCode::SDLK_z:
-                handle.press(Joypad::Input::a);
+                handle.press(Joypad::Input::a, Pressed);
                 return;
             default:
                 return;

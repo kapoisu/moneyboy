@@ -22,7 +22,7 @@ namespace gameboy::system {
         };
 
         Joypad(std::shared_ptr<Interrupt> shared_interrupt);
-        void press(Input option);
+        void press(Input option, bool pressed);
 
         virtual std::uint8_t read(int address) const override;
         virtual void write(int address, std::uint8_t value) override;
