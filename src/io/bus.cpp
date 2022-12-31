@@ -90,7 +90,7 @@ namespace gameboy::io {
 
     void Bus::connect_joypad(std::shared_ptr<Port> p_joypad)
     {
-        p_joypad = std::move(p_joypad);
+        joypad_port = std::move(p_joypad);
     }
 
     void Bus::connect_serial(std::shared_ptr<Port> p_serial)
