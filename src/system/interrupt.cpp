@@ -13,6 +13,6 @@ namespace gameboy::system {
 
     void Interrupt::write(int address, std::uint8_t value)
     {
-        interrupt_flag = value & 0x1F;
+        interrupt_flag = value | 0b1110'0000;
     }
 }

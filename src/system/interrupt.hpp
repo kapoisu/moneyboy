@@ -27,7 +27,7 @@ namespace gameboy::system {
             bit 3: Serial   Interrupt Request (INT 58h)  (1=Request)
             bit 4: Joypad   Interrupt Request (INT 60h)  (1=Request)
         */
-        std::bitset<8> interrupt_flag{0x1110'0001};
+        std::bitset<8> interrupt_flag{0x1110'0000};
     };
 }
 
