@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <optional>
 #include <type_traits>
-#include <utility>
 #include <variant>
 
 namespace gameboy::cpu {
@@ -14,11 +13,6 @@ namespace gameboy::cpu {
         half_carry = 1 << 5,
         carry = 1 << 4
     };
-
-    inline Flag operator|(Flag a, Flag b)
-    {
-        return static_cast<Flag>(std::underlying_type_t<Flag>(a) | std::underlying_type_t<Flag>(b));
-    }
 
     class FlagRegister {
     public:
