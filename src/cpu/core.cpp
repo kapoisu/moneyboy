@@ -1338,7 +1338,7 @@ namespace gameboy::cpu {
 
     Instruction::SideEffect Core::resolve_prefixed_instruction()
     {
-        int opcode{p_bus->read_byte(regs.program_counter++)};
+        auto opcode{p_bus->read_byte(regs.program_counter++)};
 
         switch (opcode) {
             using enum Instruction::Operand;
