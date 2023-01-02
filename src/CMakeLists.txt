@@ -12,6 +12,7 @@ target_sources(gameboy PRIVATE cpu/instruction.cpp)
 target_sources(gameboy PRIVATE cpu/registers.cpp)
 
 target_sources(gameboy PRIVATE io/bus.cpp)
+target_sources(gameboy PRIVATE io/oam.cpp)
 target_sources(gameboy PRIVATE io/vram.cpp)
 
 target_sources(gameboy PRIVATE system/interrupt.cpp)

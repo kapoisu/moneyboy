@@ -5,6 +5,7 @@
 #include "cpu/core.hpp"
 #include "ppu/core.hpp"
 #include "ppu/lcd.hpp"
+#include "system/interrupt.hpp"
 #include "system/joypad.hpp"
 #include "system/serial.hpp"
 #include "system/timer.hpp"
@@ -20,6 +21,7 @@ namespace gameboy {
     private:
         std::unique_ptr<cpu::Core> p_cpu{};
         std::unique_ptr<ppu::Core> p_ppu{};
+        std::shared_ptr<system::Interrupt> p_interrupt{};
         std::shared_ptr<system::Joypad> p_joypad{};
         std::shared_ptr<system::Serial> p_serial{};
         std::shared_ptr<system::Timer> p_timer{};

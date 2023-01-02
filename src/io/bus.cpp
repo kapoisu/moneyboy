@@ -3,8 +3,11 @@
 #include <stdexcept>
 
 namespace gameboy::io {
-    Bus::Bus(cartridge::Banking bankable) : cartridge_area{std::move(bankable)}
+    Bus::Bus(Bundle bundle) : peripherals{std::move(bundle)}
     {
+        work_ram.resize(0xE000 - 0xC000);
+        ports.resize(0xFF80 - 0xFF00);
+        high_ram.resize(0xFFFF - 0xFF80);
         //ram[0xFF44] = 144; // bypass frame check
     }
 
@@ -14,34 +17,46 @@ namespace gameboy::io {
             throw std::out_of_range{"Negative Address!"};
         }
         else if (address < 0x8000) {
-            return cartridge_area.read(address);
+            return peripherals.cartridge_space.read(address);
         }
-        else if (address < 0x9FFF) {
+        else if (address < 0xA000) {
             return vram.read(address);
         }
+        else if (address < 0xC000) {
+            return peripherals.cartridge_space.read(address);
+        }
+        else if (address < 0xE000) {
+            return work_ram[address - 0xC000];
+        }
+        else if (address < 0xFEA0) {
+            return work_ram[address - 0xE000]; // Mirror
+        }
+        else if (address < 0xFF00) {
+            return oam.read(address);
+        }
         else if (address == 0xFF00) {
-            return joypad_port->read(address);
+            return peripherals.joypad.get().read(address);
         }
         else if (address >= 0xFF01 && address < 0xFF03) {
-            return serial_port->read(address);
+            return peripherals.serial.get().read(address);
         }
         else if (address >= 0xFF04 && address < 0xFF08) {
-            return timer_port->read(address);
+            return peripherals.timer.get().read(address);
         }
         else if (address == 0xFF0F) {
-            return interrupt_port->read(address);
+            return peripherals.interrupt.get().read(address);
         }
         else if (address >= 0xFF40 && address < 0xFF4C) {
-            return lcd_port->read(address);
+            return peripherals.lcd.get().read(address);
         }
         else if (address >= 0xFF4D && address < 0xFF80) {
             return ports[address - 0xFF00];
         }
+        else if (address < 0xFFFF) {
+            return high_ram[address - 0xFF80];
+        }
         else if (address == 0xFFFF) {
             return interrupt_enable;
-        }
-        else if (address < 0x10000) {
-            return ram[address];
         }
         else {
             throw std::out_of_range{"Not Implemented Address Space!"};
@@ -54,63 +69,53 @@ namespace gameboy::io {
             throw std::out_of_range{"Negative Address!"};
         }
         else if (address < 0x8000) {
-            cartridge_area.write(address, value);
+            peripherals.cartridge_space.write(address, value);
         }
-        else if (address < 0x9FFF) {
+        else if (address < 0xA000) {
             vram.write(address, value);
         }
+        else if (address < 0xC000) {
+            peripherals.cartridge_space.write(address, value);
+        }
+        else if (address < 0xE000) {
+            work_ram[address - 0xC000] = value;
+        }
+        else if (address < 0xFEA0) {
+            // Mirror
+        }
+        else if (address < 0xFF00) {
+            oam.write(address, value);
+        }
         else if (address == 0xFF00) {
-            joypad_port->write(address, value);
+            peripherals.joypad.get().write(address, value);
         }
         else if (address >= 0xFF01 && address < 0xFF03) {
-            serial_port->write(address, value);
+            peripherals.serial.get().write(address, value);
         }
         else if (address >= 0xFF04 && address < 0xFF08) {
-            timer_port->write(address, value);
+            peripherals.timer.get().write(address, value);
         }
         else if (address == 0xFF0F) {
-            interrupt_port->write(address, value);
+            peripherals.interrupt.get().write(address, value);
         }
         else if (address >= 0xFF40 && address < 0xFF4C) {
-            lcd_port->write(address, value);
+            peripherals.lcd.get().write(address, value);
         }
         else if (address == 0xFF50) {
-            cartridge_area.disable_boot_rom();
+            peripherals.cartridge_space.disable_boot_rom();
         }
         else if (address >= 0xFF4D && address < 0xFF80) {
             ports[address - 0xFF4D] = value;
+        }
+        else if (address < 0xFFFF) {
+            high_ram[address - 0xFF80] = value;
         }
         else if (address == 0xFFFF) {
             interrupt_enable = value;
         }
         else {
-            ram[address] = value;
+            throw std::out_of_range{"Not Implemented Address Space!"};
         }
-    }
-
-    void Bus::connect_joypad(std::shared_ptr<Port> p_joypad)
-    {
-        joypad_port = std::move(p_joypad);
-    }
-
-    void Bus::connect_serial(std::shared_ptr<Port> p_serial)
-    {
-        serial_port = std::move(p_serial);
-    }
-
-    void Bus::connect_timer(std::shared_ptr<Port> p_timer)
-    {
-        timer_port = std::move(p_timer);
-    }
-
-    void Bus::connect_interrupt(std::shared_ptr<Port> p_interrupt)
-    {
-        interrupt_port = std::move(p_interrupt);
-    }
-
-    void Bus::connect_lcd(std::shared_ptr<Port> p_lcd)
-    {
-        lcd_port = std::move(p_lcd);
     }
 
     int make_address(std::uint8_t high, std::int8_t low)

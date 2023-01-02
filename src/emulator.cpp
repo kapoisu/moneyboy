@@ -39,27 +39,30 @@ namespace gameboy {
 
     void Emulator::load_game()
     {
-        using cartridge::Banking;
-        using io::Bus;
-
-        auto cartridge_storage{cartridge::create_storage("res/blargg/01-special.gb")};
-        auto p_mbc{create_mbc(std::move(cartridge_storage))};
+        auto cartridge_memory{cartridge::create_storage("res/Tetris (World) (Rev A).gb")};
+        auto p_mbc{create_mbc(std::move(cartridge_memory))};
 #ifndef PREBOOT
         auto p_boot_loader{std::make_unique<BootLoader>("res/DMG_boot")};
-        auto p_address_bus{std::make_shared<Bus>(Banking{std::move(p_boot_loader), std::move(p_mbc)})};
+        cartridge::Banking cartridge_banking{std::move(p_boot_loader), std::move(p_mbc)};
 #else
-        auto p_address_bus{std::make_shared<Bus>(Banking{std::move(p_mbc)})};
+        cartridge::Banking cartridge_banking{std::move(p_mbc)};
 #endif
-        auto p_interrupt{std::make_shared<system::Interrupt>()};
+        p_interrupt = std::make_shared<system::Interrupt>();
         p_joypad = std::make_shared<system::Joypad>(p_interrupt);
         p_serial = std::make_shared<system::Serial>(p_interrupt);
         p_timer = std::make_shared<system::Timer>(p_interrupt);
         p_lcd = std::make_shared<ppu::Lcd>(p_interrupt);
-        p_address_bus->connect_joypad(p_joypad);
-        p_address_bus->connect_serial(p_serial);
-        p_address_bus->connect_timer(p_timer);
-        p_address_bus->connect_interrupt(p_interrupt);
-        p_address_bus->connect_lcd(p_lcd);
+
+        io::Bundle peripherals{
+            .cartridge_space{std::move(cartridge_banking)},
+            .joypad{*p_joypad},
+            .serial{*p_serial},
+            .timer{*p_timer},
+            .interrupt{*p_interrupt},
+            .lcd{*p_lcd}
+        };
+        auto p_address_bus{std::make_shared<io::Bus>(std::move(peripherals))};
+
         p_cpu = std::make_unique<cpu::Core>(p_address_bus);
         p_ppu = std::make_unique<ppu::Core>(p_address_bus);
     }
