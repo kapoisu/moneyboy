@@ -40,15 +40,13 @@ namespace gameboy {
     void Emulator::load_game()
     {
         using cartridge::Banking;
-        using cartridge::Rom;
         using io::Bus;
 
-        auto p_cartridge{std::make_unique<Rom>("res/blargg/01-special.gb")};
-        auto p_mbc{create_mbc(std::move(p_cartridge))};
+        auto cartridge_storage{cartridge::create_storage("res/blargg/01-special.gb")};
+        auto p_mbc{create_mbc(std::move(cartridge_storage))};
 #ifndef PREBOOT
         auto p_boot_loader{std::make_unique<BootLoader>("res/DMG_boot")};
-        p_boot_loader->capture_cartridge(std::move(p_mbc));
-        auto p_address_bus{std::make_shared<Bus>(Banking{std::move(p_boot_loader)})};
+        auto p_address_bus{std::make_shared<Bus>(Banking{std::move(p_boot_loader), std::move(p_mbc)})};
 #else
         auto p_address_bus{std::make_shared<Bus>(Banking{std::move(p_mbc)})};
 #endif

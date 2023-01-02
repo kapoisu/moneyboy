@@ -4,6 +4,7 @@ target_sources(gameboy PRIVATE emulator.cpp)
 
 target_sources(gameboy PRIVATE cartridge/banking.cpp)
 target_sources(gameboy PRIVATE cartridge/mbc.cpp)
+target_sources(gameboy PRIVATE cartridge/storage.cpp)
 
 target_sources(gameboy PRIVATE cpu/arithmetic.cpp)
 target_sources(gameboy PRIVATE cpu/core.cpp)
