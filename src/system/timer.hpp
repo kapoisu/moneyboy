@@ -9,7 +9,7 @@
 namespace gameboy::system {
     class Timer : public io::Port {
     public:
-        Timer(std::shared_ptr<Interrupt> shared_interrupt);
+        Timer(std::reference_wrapper<Interrupt> interrupt_ref);
         void tick();
         bool is_enabled() const;
         std::uint8_t get_divider() const;
@@ -31,7 +31,7 @@ namespace gameboy::system {
         */
         std::uint8_t timer_control{0b1111'1000};
 
-        std::shared_ptr<Interrupt> p_interrupt;
+        std::reference_wrapper<Interrupt> interrupt;
     };
 }
 

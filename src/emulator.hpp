@@ -21,11 +21,11 @@ namespace gameboy {
     private:
         std::unique_ptr<cpu::Core> p_cpu{};
         std::unique_ptr<ppu::Core> p_ppu{};
-        std::shared_ptr<system::Interrupt> p_interrupt{};
-        std::shared_ptr<system::Joypad> p_joypad{};
-        std::shared_ptr<system::Serial> p_serial{};
-        std::shared_ptr<system::Timer> p_timer{};
-        std::shared_ptr<ppu::Lcd> p_lcd{};
+        std::unique_ptr<system::Interrupt> p_interrupt{};
+        std::unique_ptr<system::Joypad> p_joypad{};
+        std::unique_ptr<system::Serial> p_serial{};
+        std::unique_ptr<system::Timer> p_timer{};
+        std::unique_ptr<ppu::Lcd> p_lcd{};
 
         ui::WindowPtr p_game_window;
         ui::RendererPtr p_game_renderer;

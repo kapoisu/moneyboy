@@ -49,7 +49,7 @@ namespace gameboy::cpu {
         }
     }
 
-    Core::Core(std::shared_ptr<gameboy::io::Bus> shared_bus) : p_bus{std::move(shared_bus)}
+    Core::Core(std::unique_ptr<io::Bus> bus) : p_bus{std::move(bus)}
     {
     }
 

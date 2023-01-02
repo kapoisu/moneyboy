@@ -4,13 +4,13 @@
 #include <bitset>
 #include <cstdint>
 #include <memory>
-#include "io/bus.hpp"
+#include "io/port.hpp"
 #include "interrupt.hpp"
 
 namespace gameboy::system {
     class Serial : public io::Port {
     public:
-        Serial(std::shared_ptr<Interrupt> shared_interrupt);
+        Serial(std::reference_wrapper<Interrupt> interrupt_ref);
         void tick();
 
         virtual std::uint8_t read(int address) const override;
@@ -28,7 +28,7 @@ namespace gameboy::system {
         */
         std::bitset<8> transfer_control{0b0111'1110};
 
-        std::shared_ptr<Interrupt> p_interrupt;
+        std::reference_wrapper<Interrupt> interrupt;
     };
 }
 

@@ -7,7 +7,7 @@ namespace gameboy::system {
         button = 5
     };
 
-    Joypad::Joypad(std::shared_ptr<Interrupt> shared_interrupt) : p_interrupt{std::move(shared_interrupt)}
+    Joypad::Joypad(std::reference_wrapper<Interrupt> interrupt_ref) : interrupt{std::move(interrupt_ref)}
     {
     }
 
@@ -54,7 +54,7 @@ namespace gameboy::system {
         // Check if any of the lower 4 bits is 0
         bool new_signal{(read(0xFF00) & 0b0000'1111) != 0b0000'1111};
         if (signal && !new_signal) {
-            (*p_interrupt)(Interrupt::joypad);
+            interrupt(Interrupt::joypad);
         }
 
         signal = new_signal;

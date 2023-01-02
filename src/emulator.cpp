@@ -47,24 +47,28 @@ namespace gameboy {
 #else
         cartridge::Banking cartridge_banking{std::move(p_mbc)};
 #endif
-        p_interrupt = std::make_shared<system::Interrupt>();
-        p_joypad = std::make_shared<system::Joypad>(p_interrupt);
-        p_serial = std::make_shared<system::Serial>(p_interrupt);
-        p_timer = std::make_shared<system::Timer>(p_interrupt);
-        p_lcd = std::make_shared<ppu::Lcd>(p_interrupt);
+        p_interrupt = std::make_unique<system::Interrupt>();
+        p_joypad = std::make_unique<system::Joypad>(*p_interrupt);
+        p_serial = std::make_unique<system::Serial>(*p_interrupt);
+        p_timer = std::make_unique<system::Timer>(*p_interrupt);
+        p_lcd = std::make_unique<ppu::Lcd>(*p_interrupt);
+        auto p_vram{std::make_unique<ppu::Vram>(*p_lcd)};
+        auto p_oam{std::make_unique<ppu::Oam>(*p_lcd)};
 
         io::Bundle peripherals{
             .cartridge_space{std::move(cartridge_banking)},
+            .vram{*p_vram},
+            .oam{*p_oam},
             .joypad{*p_joypad},
             .serial{*p_serial},
             .timer{*p_timer},
             .interrupt{*p_interrupt},
             .lcd{*p_lcd}
         };
-        auto p_address_bus{std::make_shared<io::Bus>(std::move(peripherals))};
+        auto p_address_bus{std::make_unique<io::Bus>(std::move(peripherals))};
 
-        p_cpu = std::make_unique<cpu::Core>(p_address_bus);
-        p_ppu = std::make_unique<ppu::Core>(p_address_bus);
+        p_cpu = std::make_unique<cpu::Core>(std::move(p_address_bus));
+        p_ppu = std::make_unique<ppu::Core>(std::move(p_vram), std::move(p_oam));
     }
 
     void Emulator::run()

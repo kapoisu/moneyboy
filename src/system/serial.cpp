@@ -16,7 +16,7 @@ namespace gameboy::system {
         transfering = 7
     };
 
-    Serial::Serial(std::shared_ptr<Interrupt> shared_interrupt) : p_interrupt{std::move(shared_interrupt)}
+    Serial::Serial(std::reference_wrapper<Interrupt> interrupt_ref) : interrupt{std::move(interrupt_ref)}
     {
     }
 
@@ -45,7 +45,7 @@ namespace gameboy::system {
                     std::cout << transfer_data;
                     bit_count = 0;
                     transfer_control.reset(transfering);
-                    (*p_interrupt)(Interrupt::serial);
+                    interrupt(Interrupt::serial);
                 }
             }
 

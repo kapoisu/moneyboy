@@ -11,7 +11,7 @@ namespace gameboy::system {
         tac = 0xFF07
     };
 
-    Timer::Timer(std::shared_ptr<Interrupt> shared_interrupt) : p_interrupt{std::move(shared_interrupt)}
+    Timer::Timer(std::reference_wrapper<Interrupt> interrupt_ref) : interrupt{std::move(interrupt_ref)}
     {
     }
 
@@ -35,7 +35,7 @@ namespace gameboy::system {
 
         if (is_overflowed) {
             timer_counter = timer_modulus;
-            (*p_interrupt)(Interrupt::timer);
+            interrupt(Interrupt::timer);
         }
 
         if (timer_counter == (std::numeric_limits<std::uint8_t>::max() + 1)) {

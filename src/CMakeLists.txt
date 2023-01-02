@@ -12,8 +12,6 @@ target_sources(gameboy PRIVATE cpu/instruction.cpp)
 target_sources(gameboy PRIVATE cpu/registers.cpp)
 
 target_sources(gameboy PRIVATE io/bus.cpp)
-target_sources(gameboy PRIVATE io/oam.cpp)
-target_sources(gameboy PRIVATE io/vram.cpp)
 
 target_sources(gameboy PRIVATE system/interrupt.cpp)
 target_sources(gameboy PRIVATE system/joypad.cpp)
@@ -22,6 +20,8 @@ target_sources(gameboy PRIVATE system/timer.cpp)
 
 target_sources(gameboy PRIVATE ppu/core.cpp)
 target_sources(gameboy PRIVATE ppu/lcd.cpp)
+target_sources(gameboy PRIVATE ppu/oam.cpp)
+target_sources(gameboy PRIVATE ppu/vram.cpp)
 
 target_sources(gameboy PRIVATE ui/window.cpp)
 

@@ -1,7 +1,7 @@
-#include "Oam.hpp"
+#include "oam.hpp"
 
-namespace gameboy::io {
-    Oam::Oam()
+namespace gameboy::ppu {
+    Oam::Oam(std::reference_wrapper<Lcd> lcd_ref) : lcd{lcd_ref}
     {
         storage.resize(160);
     }

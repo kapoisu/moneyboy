@@ -20,7 +20,7 @@ namespace gameboy::io {
             return peripherals.cartridge_space.read(address);
         }
         else if (address < 0xA000) {
-            return vram.read(address);
+            return peripherals.vram.get().read(address);
         }
         else if (address < 0xC000) {
             return peripherals.cartridge_space.read(address);
@@ -28,11 +28,11 @@ namespace gameboy::io {
         else if (address < 0xE000) {
             return work_ram[address - 0xC000];
         }
-        else if (address < 0xFEA0) {
-            return work_ram[address - 0xE000]; // Mirror
+        else if (address < 0xFE00) {
+            return work_ram[address - 0xE000]; // mirror
         }
-        else if (address < 0xFF00) {
-            return oam.read(address);
+        else if (address < 0xFEA0) {
+            return peripherals.oam.get().read(address);
         }
         else if (address == 0xFF00) {
             return peripherals.joypad.get().read(address);
@@ -49,7 +49,7 @@ namespace gameboy::io {
         else if (address >= 0xFF40 && address < 0xFF4C) {
             return peripherals.lcd.get().read(address);
         }
-        else if (address >= 0xFF4D && address < 0xFF80) {
+        else if (address >= 0xFF00 && address < 0xFF80) {
             return ports[address - 0xFF00];
         }
         else if (address < 0xFFFF) {
@@ -72,7 +72,7 @@ namespace gameboy::io {
             peripherals.cartridge_space.write(address, value);
         }
         else if (address < 0xA000) {
-            vram.write(address, value);
+            peripherals.vram.get().write(address, value);
         }
         else if (address < 0xC000) {
             peripherals.cartridge_space.write(address, value);
@@ -80,11 +80,11 @@ namespace gameboy::io {
         else if (address < 0xE000) {
             work_ram[address - 0xC000] = value;
         }
-        else if (address < 0xFEA0) {
-            // Mirror
+        else if (address < 0xFE00) {
+            throw std::out_of_range{"This address is the mirror of WRAM."};
         }
-        else if (address < 0xFF00) {
-            oam.write(address, value);
+        else if (address < 0xFEA0) {
+            peripherals.oam.get().write(address, value);
         }
         else if (address == 0xFF00) {
             peripherals.joypad.get().write(address, value);
@@ -104,8 +104,8 @@ namespace gameboy::io {
         else if (address == 0xFF50) {
             peripherals.cartridge_space.disable_boot_rom();
         }
-        else if (address >= 0xFF4D && address < 0xFF80) {
-            ports[address - 0xFF4D] = value;
+        else if (address >= 0xFF00 && address < 0xFF80) {
+            ports[address - 0xFF00] = value;
         }
         else if (address < 0xFFFF) {
             high_ram[address - 0xFF80] = value;

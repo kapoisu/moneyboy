@@ -1,7 +1,7 @@
 #include "vram.hpp"
 
-namespace gameboy::io {
-    Vram::Vram()
+namespace gameboy::ppu {
+    Vram::Vram(std::reference_wrapper<Lcd> lcd_ref) : lcd{lcd_ref}
     {
         static constexpr int bank_size{0x2000};
 

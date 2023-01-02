@@ -2,7 +2,7 @@
 #define SYSTEM_INTERRUPT_H
 
 #include <bitset>
-#include "io/bus.hpp"
+#include "io/port.hpp"
 
 namespace gameboy::system {
     class Interrupt : public io::Port {

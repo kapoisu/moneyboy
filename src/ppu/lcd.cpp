@@ -1,5 +1,6 @@
 #include "lcd.hpp"
 #include <stdexcept>
+#include <utility>
 
 namespace gameboy::ppu {
     enum Control {
@@ -21,7 +22,7 @@ namespace gameboy::ppu {
         coincidence_interrupt = 6
     };
 
-    Lcd::Lcd(std::shared_ptr<system::Interrupt> shared_interrupt) : p_interrupt{std::move(shared_interrupt)}
+    Lcd::Lcd(std::reference_wrapper<system::Interrupt> interrupt_ref) : interrupt{std::move(interrupt_ref)}
     {
     }
 
@@ -98,7 +99,7 @@ namespace gameboy::ppu {
         // mode 1
         if (regs.ly == scanlines_per_frame && counter_x == 0) {
             regs.status = (regs.status.to_ulong() & 0b1111'1100) + 1;
-            (*p_interrupt)(system::Interrupt::vblank);
+            interrupt(system::Interrupt::vblank);
             ui::render<Lcd::pixels_per_scanline, Lcd::scanlines_per_frame>(renderer, texture, frame_buffer);
         }
 
@@ -210,7 +211,7 @@ namespace gameboy::ppu {
         };
 
         if (new_signal && !signal) {
-            (*p_interrupt)(system::Interrupt::lcd_stat);
+            interrupt(system::Interrupt::lcd_stat);
         }
 
         signal = new_signal;

@@ -37,7 +37,7 @@ namespace gameboy::ppu {
 
     class Lcd : public io::Port {
     public:
-        Lcd(std::shared_ptr<system::Interrupt> shared_interrupt);
+        Lcd(std::reference_wrapper<system::Interrupt> interrupt_ref);
         int background_map_selection() const;
         int data_region_selection() const;
         bool is_enabled() const;
@@ -59,7 +59,7 @@ namespace gameboy::ppu {
         std::array<std::uint8_t, pixels_per_scanline * scanlines_per_frame * 4> frame_buffer{};
         Registers regs{};
 
-        std::shared_ptr<system::Interrupt> p_interrupt;
+        std::reference_wrapper<system::Interrupt> interrupt;
     };
 }
 

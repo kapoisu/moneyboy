@@ -2,17 +2,18 @@
 #include <bitset>
 
 namespace gameboy::ppu {
-    Core::Core(std::shared_ptr<gameboy::io::Bus> shared_bus) : p_bus{std::move(shared_bus)}
+    Core::Core(std::unique_ptr<Vram> unique_vram, std::unique_ptr<Oam> unique_oam)
+        : p_vram{std::move(unique_vram)}, p_oam{std::move(unique_oam)}
     {
     }
 
-    int get_tile_id(const Lcd& screen, const gameboy::io::Bus& bus, Position pos, TileTrait tile)
+    int get_tile_id_index(const Lcd& screen, Position pos, TileTrait tile)
     {
         constexpr int tiles_per_row{32};
         auto tile_map_begin{screen.background_map_selection() == 0 ? 0x9800 : 0x9C00};
         auto tile_map_index{(pos.y / tile.height) * tiles_per_row + (pos.x / tile.width)};
 
-        return bus.read_byte(tile_map_begin + tile_map_index);
+        return tile_map_begin + tile_map_index - 0x8000;
     }
 
     int get_tile_data_index(const Lcd& screen, int tile_id, Position pos, TileTrait tile)
@@ -45,7 +46,7 @@ namespace gameboy::ppu {
         auto bytes_per_row{bits_per_pixel * tile.width / 8}; // typically this value is 2
         auto offset{adjusted_id * bytes_per_tile + y_within_a_tile * bytes_per_row};
 
-        return tile_data_begin + offset;
+        return tile_data_begin + offset - 0x8000;
     }
 
     void Core::tick(Lcd& screen)
@@ -94,11 +95,11 @@ namespace gameboy::ppu {
                 auto x_by_pixel{(column + screen.get_scroll_x()) % map_width};
                 Position pos{x_by_pixel, y_by_pixel};
 
-                auto tile_id{get_tile_id(screen, *p_bus, pos)};
+                auto tile_id{p_vram->active_ram[get_tile_id_index(screen, pos)]};
                 auto address{get_tile_data_index(screen, tile_id, pos)};
 
-                std::bitset<8> low_byte{p_bus->read_byte(address)};
-                std::bitset<8> high_byte{p_bus->read_byte(address + 1)};
+                std::bitset<8> low_byte{p_vram->active_ram[address]};
+                std::bitset<8> high_byte{p_vram->active_ram[address + 1]};
 
                 auto x_within_a_tile{pos.x % tile_trait.width};
                 auto bit_pos{7 - x_within_a_tile};
