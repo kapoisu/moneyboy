@@ -12,6 +12,8 @@ namespace gameboy::ppu {
         explicit Core(std::unique_ptr<Vram> unique_vram, std::unique_ptr<Oam> unique_oam);
         void tick(Lcd& screen);
     private:
+        std::vector<std::uint8_t> background_buffer{};
+
         std::unique_ptr<Vram> p_vram;
         std::unique_ptr<Oam> p_oam;
     };

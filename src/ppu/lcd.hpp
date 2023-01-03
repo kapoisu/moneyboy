@@ -1,10 +1,10 @@
 #ifndef PPU_LCD_H
 #define PPU_LCD_H
 
-#include <array>
 #include <bitset>
 #include <cstdint>
 #include <memory>
+#include <vector>
 #include "io/port.hpp"
 #include "system/interrupt.hpp"
 #include "ui/window.hpp"
@@ -35,18 +35,29 @@ namespace gameboy::ppu {
         std::uint8_t window_x;
     };
 
+    enum class Mode {
+        h_blank = 0,
+        v_blank = 1,
+        oam_search = 2,
+        pixel_transfer = 3
+    };
+
     class Lcd : public io::Port {
     public:
         Lcd(std::reference_wrapper<system::Interrupt> interrupt_ref);
+        bool is_background_displayed() const;
         int background_map_selection() const;
         int data_region_selection() const;
+        bool is_window_displayed() const;
         bool is_enabled() const;
+        Mode get_mode() const;
         std::uint8_t get_scroll_y() const;
         std::uint8_t get_scroll_x() const;
         std::uint8_t get_y_coordinate() const;
         std::uint8_t get_background_color(int index) const;
+        Position get_window_position() const;
         void update(SDL_Renderer& renderer, SDL_Texture& texture);
-        void push_data(Pixel pixel);
+        void push_data(std::vector<std::uint8_t>&& pixels);
 
         virtual std::uint8_t read(int address) const override;
         virtual void write(int address, std::uint8_t value) override;
@@ -56,7 +67,7 @@ namespace gameboy::ppu {
     private:
         void check_status(int x, int y);
 
-        std::array<std::uint8_t, pixels_per_scanline * scanlines_per_frame * 4> frame_buffer{};
+        std::vector<std::uint8_t> frame_buffer{};
         Registers regs{};
 
         std::reference_wrapper<system::Interrupt> interrupt;

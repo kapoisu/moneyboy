@@ -1,10 +1,13 @@
 #include "core.hpp"
 #include <bitset>
+#include <iostream>
+#include <queue>
 
 namespace gameboy::ppu {
     Core::Core(std::unique_ptr<Vram> unique_vram, std::unique_ptr<Oam> unique_oam)
         : p_vram{std::move(unique_vram)}, p_oam{std::move(unique_oam)}
     {
+        background_buffer.reserve(Lcd::pixels_per_scanline * Lcd::scanlines_per_frame * 4);
     }
 
     int get_tile_id_index(const Lcd& screen, Position pos, TileTrait tile)
@@ -52,13 +55,27 @@ namespace gameboy::ppu {
     void Core::tick(Lcd& screen)
     {
         constexpr int oam_search_duration{80};
+        constexpr int pixel_transfer_duration{172};
         constexpr int cycles_per_scanline{456};
         constexpr int cycles_per_frame{70224};
+        constexpr int map_width{256_px};
+        constexpr int map_height{256_px};
 
         static int cycle{0};
+        static int scanline_x{0};
+        static int viewport_x{0};
+        static int fetcher_x{0};
+        static Position current_pos{};
+        static int tile_id{0};
+        static int tile_data_address{0};
+        static std::bitset<8> low_byte{};
+        static std::bitset<8> high_byte{};
 
         if (!screen.is_enabled()) {
             cycle = 0;
+            scanline_x = 0;
+            viewport_x = 0;
+            fetcher_x = 0;
             return;
         }
 
@@ -85,32 +102,83 @@ namespace gameboy::ppu {
 
         */
 
-        if (cycle % cycles_per_scanline == oam_search_duration && current_scanline < Lcd::scanlines_per_frame) {
-            constexpr int map_width{256_px};
-            constexpr int map_height{256_px};
-            const TileTrait tile_trait{.width{8_px}, .height{8_px}};
-
-            auto y_by_pixel{(current_scanline + screen.get_scroll_y()) % map_height};
-            for (auto column{0}; column < Lcd::pixels_per_scanline; ++column) {
-                auto x_by_pixel{(column + screen.get_scroll_x()) % map_width};
-                Position pos{x_by_pixel, y_by_pixel};
-
-                auto tile_id{p_vram->active_ram[get_tile_id_index(screen, pos)]};
-                auto address{get_tile_data_index(screen, tile_id, pos)};
-
-                std::bitset<8> low_byte{p_vram->active_ram[address]};
-                std::bitset<8> high_byte{p_vram->active_ram[address + 1]};
-
-                auto x_within_a_tile{pos.x % tile_trait.width};
-                auto bit_pos{7 - x_within_a_tile};
-                bool lsb_of_pixel{low_byte[bit_pos]};
-                bool msb_of_pixel{high_byte[bit_pos]};
-                auto color_id{(msb_of_pixel << 1) | lsb_of_pixel};
-                auto color{screen.get_background_color(color_id)};
-
-                screen.push_data(Pixel{{column, current_scanline}, color});
+        if (current_scanline >= Lcd::scanlines_per_frame) {
+            // v-blank
+            if (current_scanline == Lcd::scanlines_per_frame && scanline_x == 0) {
+                screen.push_data(std::move(background_buffer));
             }
         }
+        else if (scanline_x < oam_search_duration) {
+            // oam search
+        }
+        else if ((scanline_x - oam_search_duration) >= 6 && fetcher_x < Lcd::pixels_per_scanline) {
+            // pixel transfer: first 6 cycles are discarded
+            switch ((scanline_x - 6) % 8) {
+                case 0: {
+                        auto y_by_pixel{(current_scanline + screen.get_scroll_y()) % map_height};
+                        auto x_by_pixel{(fetcher_x + screen.get_scroll_x()) % map_width};
+                        current_pos = {x_by_pixel, y_by_pixel};
+                        tile_id = p_vram->active_ram[get_tile_id_index(screen, current_pos)];
+                    }
+                    break;
+                case 2:
+                    tile_data_address = get_tile_data_index(screen, tile_id, current_pos);
+                    low_byte = p_vram->active_ram[tile_data_address++];
+                    break;
+                case 4:
+                    high_byte = p_vram->active_ram[tile_data_address];
+                    break;
+                case 6:
+                    for (int i{7}; i >= 0; --i) {
+                        auto color_id{screen.is_background_displayed() ? (high_byte[i] << 1) | low_byte[i] : 0};
+                        auto color{screen.get_background_color(color_id)};
+                        background_buffer.push_back(0xFF);  // A
+                        background_buffer.push_back(color); // B
+                        background_buffer.push_back(color); // G
+                        background_buffer.push_back(color); // R
+                        ++viewport_x;
+                        ++fetcher_x;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        ++scanline_x;
+
+        if (scanline_x == cycles_per_scanline) {
+            scanline_x = 0;
+            viewport_x = 0;
+            fetcher_x = 0;
+        }
+
+        // if (cycle % cycles_per_scanline == oam_search_duration && current_scanline < Lcd::scanlines_per_frame) {
+        //     constexpr int map_width{256_px};
+        //     constexpr int map_height{256_px};
+        //     const TileTrait tile_trait{.width{8_px}, .height{8_px}};
+
+        //     auto y_by_pixel{(current_scanline + screen.get_scroll_y()) % map_height};
+        //     for (auto column{0}; column < Lcd::pixels_per_scanline; ++column) {
+        //         auto x_by_pixel{(column + screen.get_scroll_x()) % map_width};
+        //         Position pos{x_by_pixel, y_by_pixel};
+
+        //         auto tile_id{p_vram->active_ram[get_tile_id_index(screen, pos)]};
+        //         auto address{get_tile_data_index(screen, tile_id, pos)};
+
+        //         std::bitset<8> low_byte{p_vram->active_ram[address]};
+        //         std::bitset<8> high_byte{p_vram->active_ram[address + 1]};
+
+        //         auto x_within_a_tile{pos.x % tile_trait.width};
+        //         auto bit_pos{7 - x_within_a_tile};
+        //         bool lsb_of_pixel{low_byte[bit_pos]};
+        //         bool msb_of_pixel{high_byte[bit_pos]};
+        //         auto color_id{screen.is_background_displayed() ? (msb_of_pixel << 1) | lsb_of_pixel : 0};
+        //         auto color{screen.get_background_color(color_id)};
+
+        //         screen.push_data(Pixel{{column, current_scanline}, color});
+        //     }
+        // }
 
         cycle = (cycle + 1) % cycles_per_frame;
     }

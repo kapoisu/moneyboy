@@ -1,4 +1,5 @@
 #include "lcd.hpp"
+#include <array>
 #include <stdexcept>
 #include <utility>
 
@@ -24,6 +25,12 @@ namespace gameboy::ppu {
 
     Lcd::Lcd(std::reference_wrapper<system::Interrupt> interrupt_ref) : interrupt{std::move(interrupt_ref)}
     {
+        frame_buffer.resize(pixels_per_scanline * scanlines_per_frame * 4);
+    }
+
+    bool Lcd::is_background_displayed() const
+    {
+        return regs.control.test(background_display);
     }
 
     int Lcd::background_map_selection() const
@@ -36,9 +43,19 @@ namespace gameboy::ppu {
         return regs.control.test(tile_data_select);
     }
 
+    bool Lcd::is_window_displayed() const
+    {
+        return regs.control.test(window_display);
+    }
+
     bool Lcd::is_enabled() const
     {
         return regs.control.test(lcd_display);
+    }
+
+    Mode Lcd::get_mode() const
+    {
+        return static_cast<Mode>(regs.status.to_ulong() % 4);
     }
 
     std::uint8_t Lcd::get_scroll_y() const
@@ -66,6 +83,11 @@ namespace gameboy::ppu {
         return gray_shade[(regs.background_palette >> (index * 2)) & 0b00000011]; // each color is represented by 2 bits
     }
 
+    Position Lcd::get_window_position() const
+    {
+        return {regs.window_x, regs.window_y};
+    }
+
     void Lcd::update(SDL_Renderer& renderer, SDL_Texture& texture)
     {
         constexpr int x_modulus{114};
@@ -77,10 +99,6 @@ namespace gameboy::ppu {
             regs.ly = 0;
             counter_x = 0;
             return;
-        }
-
-        if (!regs.control.test(background_display)) {
-            frame_buffer.fill(0xFF);
         }
 
         ++counter_x;
@@ -116,12 +134,9 @@ namespace gameboy::ppu {
         check_status(counter_x, regs.ly);
     }
 
-    void Lcd::push_data(Pixel pixel)
+    void Lcd::push_data(std::vector<std::uint8_t>&& pixels)
     {
-        frame_buffer[(pixel.pos.y * Lcd::pixels_per_scanline + pixel.pos.x) * 4 + 3] = pixel.color;
-        frame_buffer[(pixel.pos.y * Lcd::pixels_per_scanline + pixel.pos.x) * 4 + 2] = pixel.color;
-        frame_buffer[(pixel.pos.y * Lcd::pixels_per_scanline + pixel.pos.x) * 4 + 1] = pixel.color;
-        frame_buffer[(pixel.pos.y * Lcd::pixels_per_scanline + pixel.pos.x) * 4 + 0] = 0xFF;
+        frame_buffer = std::move(pixels);
     }
 
     std::uint8_t Lcd::read(int address) const
