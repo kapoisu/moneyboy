@@ -1,5 +1,4 @@
 #include "core.hpp"
-#include <bitset>
 #include <iostream>
 
 namespace gameboy::ppu {
@@ -85,6 +84,26 @@ namespace gameboy::ppu {
         ++fetcher.counter_x;
     }
 
+    void Core::search_sprite(int current_scanline, int scanline_x)
+    {
+        constexpr int bytes_per_sprite{4};
+
+        if (scanline_x % 2 == 0) {
+            auto sprite_index{(scanline_x / 2)};
+            auto address{sprite_index * bytes_per_sprite};
+            Sprite sprite{
+                .pos{.x{oam.get().storage[address + 1]}, .y{oam.get().storage[address]}},
+                .tile_id{oam.get().storage[address + 2]},
+                .attribute{oam.get().storage[address + 3]}
+            };
+
+            bool y_condition{(current_scanline + 16) >= sprite.pos.y && (current_scanline + 16) < (sprite.pos.y + 8)};
+            if (y_condition && sprite_buffer.size() < 10) {
+                sprite_buffer.insert({sprite.pos.x, sprite});
+            }
+        }
+    }
+
     void Core::idle(Lcd& screen)
     {
         if (screen.is_enabled()) {
@@ -141,10 +160,12 @@ namespace gameboy::ppu {
             // v-blank
             if (current_scanline == Lcd::scanlines_per_frame && scanline_x == 0) {
                 fetcher.window_line_counter = 0;
+                sprite_buffer.clear();
             }
         }
         else if (scanline_x < oam_search_duration) {
             // oam search
+            search_sprite(current_scanline, scanline_x);
         }
         else if (shifter.counter_x < Lcd::pixels_per_scanline) {
             if (!is_window_active && check_window(screen, {shifter.counter_x, current_scanline})) {
