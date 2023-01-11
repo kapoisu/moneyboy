@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
 
 namespace gameboy::cartridge {
     Storage create_storage(const std::string& file_name)
@@ -10,6 +11,10 @@ namespace gameboy::cartridge {
 
         std::cout << "Load cartridge: " << file_name << "\n";
         std::ifstream file{file_name, std::ios::binary};
+
+        if (!file.is_open()) {
+            throw std::runtime_error{"The cartridge file does not exist.\n"};
+        }
 
         Storage storage{};
         storage.rom.resize(bank_size);
