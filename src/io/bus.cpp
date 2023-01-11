@@ -43,6 +43,13 @@ namespace gameboy::io {
         else if (address < 0xFEA0) {
             return peripherals.oam.get().read(address);
         }
+        else if (address < 0xFF00) {
+            /*
+                Access to this area is prohibited. Unfortunately, it does occurs
+                in some games and may cause OAM corruption on real hardware.
+            */
+            return 0;
+        }
         else if (address == 0xFF00) {
             return peripherals.joypad.get().read(address);
         }
@@ -94,6 +101,12 @@ namespace gameboy::io {
         }
         else if (address < 0xFEA0) {
             peripherals.oam.get().write(address, value);
+        }
+        else if (address < 0xFF00) {
+            /*
+                Access to this area is prohibited. Unfortunately, it does occurs
+                in some games and may cause OAM corruption on real hardware.
+            */
         }
         else if (address == 0xFF00) {
             peripherals.joypad.get().write(address, value);
