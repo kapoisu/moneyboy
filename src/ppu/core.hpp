@@ -1,7 +1,7 @@
 #ifndef PPU_CORE_H
 #define PPU_CORE_H
 
-#include <memory>
+#include <functional>
 #include "lcd.hpp"
 #include "oam.hpp"
 #include "vram.hpp"
@@ -9,13 +9,13 @@
 namespace gameboy::ppu {
     class Core {
     public:
-        explicit Core(std::unique_ptr<Vram> unique_vram, std::unique_ptr<Oam> unique_oam);
+        explicit Core(std::reference_wrapper<Vram> unique_vram, std::reference_wrapper<Oam> unique_oam);
         void tick(Lcd& screen);
     private:
         std::vector<std::uint8_t> background_buffer{};
 
-        std::unique_ptr<Vram> p_vram;
-        std::unique_ptr<Oam> p_oam;
+        std::reference_wrapper<Vram> vram;
+        std::reference_wrapper<Oam> oam;
     };
 
     struct TileTrait {

@@ -5,6 +5,8 @@
 #include "cpu/core.hpp"
 #include "ppu/core.hpp"
 #include "ppu/lcd.hpp"
+#include "ppu/oam.hpp"
+#include "ppu/vram.hpp"
 #include "system/interrupt.hpp"
 #include "system/joypad.hpp"
 #include "system/serial.hpp"
@@ -20,12 +22,14 @@ namespace gameboy {
         void run();
     private:
         std::unique_ptr<cpu::Core> p_cpu{};
-        std::unique_ptr<ppu::Core> p_ppu{};
         std::unique_ptr<system::Interrupt> p_interrupt{};
         std::unique_ptr<system::Joypad> p_joypad{};
         std::unique_ptr<system::Serial> p_serial{};
         std::unique_ptr<system::Timer> p_timer{};
+        std::unique_ptr<ppu::Core> p_ppu{};
         std::unique_ptr<ppu::Lcd> p_lcd{};
+        std::unique_ptr<ppu::Oam> p_oam{};
+        std::unique_ptr<ppu::Vram> p_vram{};
 
         ui::WindowPtr p_game_window;
         ui::RendererPtr p_game_renderer;

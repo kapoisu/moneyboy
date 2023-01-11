@@ -52,8 +52,8 @@ namespace gameboy {
         p_serial = std::make_unique<system::Serial>(*p_interrupt);
         p_timer = std::make_unique<system::Timer>(*p_interrupt);
         p_lcd = std::make_unique<ppu::Lcd>(*p_interrupt);
-        auto p_vram{std::make_unique<ppu::Vram>(*p_lcd)};
-        auto p_oam{std::make_unique<ppu::Oam>(*p_lcd)};
+        p_vram = std::make_unique<ppu::Vram>(*p_lcd);
+        p_oam = std::make_unique<ppu::Oam>(*p_lcd);
 
         io::Bundle peripherals{
             .cartridge_space{std::move(cartridge_banking)},
@@ -68,7 +68,7 @@ namespace gameboy {
         auto p_address_bus{std::make_unique<io::Bus>(std::move(peripherals))};
 
         p_cpu = std::make_unique<cpu::Core>(std::move(p_address_bus));
-        p_ppu = std::make_unique<ppu::Core>(std::move(p_vram), std::move(p_oam));
+        p_ppu = std::make_unique<ppu::Core>(*p_vram, *p_oam);
     }
 
     void Emulator::run()

@@ -4,8 +4,8 @@
 #include <queue>
 
 namespace gameboy::ppu {
-    Core::Core(std::unique_ptr<Vram> unique_vram, std::unique_ptr<Oam> unique_oam)
-        : p_vram{std::move(unique_vram)}, p_oam{std::move(unique_oam)}
+    Core::Core(std::reference_wrapper<Vram> vram_ref, std::reference_wrapper<Oam> oam_ref)
+        : vram{vram_ref}, oam{oam_ref}
     {
         background_buffer.reserve(Lcd::pixels_per_scanline * Lcd::scanlines_per_frame * 4);
     }
@@ -118,15 +118,15 @@ namespace gameboy::ppu {
                         auto y_by_pixel{(current_scanline + screen.get_scroll_y()) % map_height};
                         auto x_by_pixel{(fetcher_x + screen.get_scroll_x()) % map_width};
                         current_pos = {x_by_pixel, y_by_pixel};
-                        tile_id = p_vram->active_ram[get_tile_id_index(screen, current_pos)];
+                        tile_id = vram.get().active_ram[get_tile_id_index(screen, current_pos)];
                     }
                     break;
                 case 2:
                     tile_data_address = get_tile_data_index(screen, tile_id, current_pos);
-                    low_byte = p_vram->active_ram[tile_data_address++];
+                    low_byte = vram.get().active_ram[tile_data_address++];
                     break;
                 case 4:
-                    high_byte = p_vram->active_ram[tile_data_address];
+                    high_byte = vram.get().active_ram[tile_data_address];
                     break;
                 case 6:
                     for (int i{7}; i >= 0; --i) {
