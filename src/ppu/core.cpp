@@ -11,6 +11,11 @@ namespace gameboy::ppu {
             && window_position.x <= current_position.x + 7;
     }
 
+    bool check_sprite(const Lcd& screen, int shifter_x, int sprite_x)
+    {
+        return screen.is_sprite_displayed() && sprite_x <= shifter_x + 8;
+    }
+
     Core::Core(std::reference_wrapper<Vram> vram_ref, std::reference_wrapper<Oam> oam_ref)
         : vram{vram_ref}, oam{oam_ref}
     {
@@ -82,6 +87,29 @@ namespace gameboy::ppu {
         }
 
         ++fetcher.counter_x;
+    }
+
+    void Core::fetch_sprite(const Lcd& screen, int current_scanline)
+    {
+        auto sprite{sprite_buffer.cbegin()->second};
+        auto address{TileDataIndex{}(sprite.tile_id, 1, current_scanline - sprite.pos.y % 8, 0, sprite.attribute.test(Sprite::y_flip))};
+        std::bitset<8> low_byte = vram.get().read(address);
+        std::bitset<8> high_byte = vram.get().read(address + 1);
+
+        auto discarded_pixels{std::ssize(sprite_queue) + (sprite.pos.x < 8 ? 8 - sprite.pos.x : 0)};
+
+        for (auto i{7 - discarded_pixels}; i >= 0; --i) {
+            auto bit_pos{sprite.attribute.test(Sprite::x_flip) ? (7 - i) : i};
+            auto color_id{(high_byte[bit_pos] << 1) | low_byte[bit_pos]};
+
+            sprite_queue.push(SpritePixel{
+                color_id,
+                sprite.attribute.test(Sprite::palette_number),
+                sprite.attribute.test(Sprite::priority)
+            });
+        }
+
+        sprite_buffer.erase(sprite_buffer.cbegin());
     }
 
     void Core::search_sprite(int current_scanline, int scanline_x)
@@ -173,6 +201,10 @@ namespace gameboy::ppu {
                 fetcher.counter_x = 0;
             }
 
+            if (!sprite_buffer.empty() && check_sprite(screen, shifter.counter_x, sprite_buffer.cbegin()->first)) {
+                fetch_sprite(screen, current_scanline);
+            }
+
             fetch_background(screen, current_scanline, is_window_active);
 
             if (!background_queue.empty()) {
@@ -182,7 +214,18 @@ namespace gameboy::ppu {
                 }
 
                 background_queue.pop();
+
                 auto color{screen.get_background_color(color_id)};
+
+                if (!sprite_queue.empty()) {
+                    const auto& sprite_pixel{sprite_queue.front()};
+                    if (sprite_pixel.color_id > 0 && (sprite_pixel.priority == 0 || (sprite_pixel.priority == 1 && color_id == 0))) {
+                        color = screen.get_object_color(sprite_pixel.palette_id, sprite_pixel.color_id);
+                    }
+
+                    sprite_queue.pop();
+                }
+
                 screen.append(color);
                 ++shifter.counter_x;
             }
@@ -199,6 +242,8 @@ namespace gameboy::ppu {
             fetcher.counter_x = 0;
             shifter.counter_x = 0;
             background_queue = {};
+            sprite_queue = {};
+            sprite_buffer.clear();
         }
 
         cycle = (cycle + 1) % cycles_per_frame;

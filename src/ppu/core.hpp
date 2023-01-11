@@ -34,6 +34,11 @@ namespace gameboy::ppu {
         int color_id;
     };
 
+    struct SpritePixel : public Pixel {
+        std::uint8_t palette_id;
+        std::uint8_t priority;
+    };
+
     struct Fetcher {
         int counter_x;
         int window_line_counter;
@@ -49,6 +54,7 @@ namespace gameboy::ppu {
         void tick(Lcd& screen);
     private:
         void fetch_background(const Lcd& screen, int current_scanline, bool is_window_active);
+        void fetch_sprite(const Lcd& screen, int current_scanline);
         void search_sprite(int current_scanline, int scanline_x);
         void idle(Lcd& screen);
         void work(Lcd& screen);
@@ -59,6 +65,7 @@ namespace gameboy::ppu {
         Shifter shifter{};
 
         std::queue<Pixel> background_queue{};
+        std::queue<SpritePixel> sprite_queue{};
         std::multimap<int, Sprite> sprite_buffer{};
 
         std::reference_wrapper<Vram> vram;

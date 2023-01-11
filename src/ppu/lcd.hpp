@@ -42,6 +42,7 @@ namespace gameboy::ppu {
         Lcd(std::reference_wrapper<system::Interrupt> interrupt_ref);
         bool is_background_displayed() const;
         bool is_window_displayed() const;
+        bool is_sprite_displayed() const;
         int background_map_selection() const;
         int window_map_selection() const;
         int data_region_selection() const;
@@ -51,6 +52,7 @@ namespace gameboy::ppu {
         std::uint8_t get_scroll_x() const;
         std::uint8_t get_y_coordinate() const;
         std::uint8_t get_background_color(int index) const;
+        std::uint8_t get_object_color(int palette_id, int index) const;
         Position get_window_position() const;
         void update(SDL_Renderer& renderer, SDL_Texture& texture);
         void append(std::uint8_t color);

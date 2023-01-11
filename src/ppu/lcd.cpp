@@ -38,6 +38,11 @@ namespace gameboy::ppu {
         return regs.control.test(window_display);
     }
 
+    bool Lcd::is_sprite_displayed() const
+    {
+        return regs.control.test(object_display);
+    }
+
     int Lcd::background_map_selection() const
     {
         return regs.control.test(background_tile_map_select);
@@ -88,6 +93,17 @@ namespace gameboy::ppu {
         return gray_shade[(regs.background_palette >> (index * 2)) & 0b00000011]; // each color is represented by 2 bits
     }
 
+    std::uint8_t Lcd::get_object_color(int palette_id, int index) const
+    {
+        static const std::array<std::uint8_t, 4> gray_shade{255, 211, 169, 0};
+        if (palette_id == 0) {
+            return gray_shade[(regs.object_palette_0 >> (index * 2)) & 0b00000011];
+        }
+        else {
+            return gray_shade[(regs.object_palette_1 >> (index * 2)) & 0b00000011];
+        }
+    }
+
     Position Lcd::get_window_position() const
     {
         return {regs.window_x, regs.window_y};
@@ -115,7 +131,7 @@ namespace gameboy::ppu {
         regs.status.set(coincidence_flag, regs.ly == regs.ly_compare);
 
         // mode 0
-        if (regs.ly < scanlines_per_frame && counter_x >= (20 + 43)) {
+        if (regs.ly < scanlines_per_frame && counter_x >= (20 + 53)) {
             regs.status = (regs.status.to_ulong() & 0b1111'1100) + 0;
         }
 
