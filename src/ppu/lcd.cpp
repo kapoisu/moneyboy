@@ -25,7 +25,7 @@ namespace gameboy::ppu {
 
     Lcd::Lcd(std::reference_wrapper<system::Interrupt> interrupt_ref) : interrupt{std::move(interrupt_ref)}
     {
-        frame_buffer.resize(pixels_per_scanline * scanlines_per_frame * 4);
+        frame_buffer.reserve(pixels_per_scanline * scanlines_per_frame * 4);
     }
 
     bool Lcd::is_background_displayed() const
@@ -119,6 +119,7 @@ namespace gameboy::ppu {
             regs.status = (regs.status.to_ulong() & 0b1111'1100) + 1;
             interrupt(system::Interrupt::vblank);
             ui::render<Lcd::pixels_per_scanline, Lcd::scanlines_per_frame>(renderer, texture, frame_buffer);
+            frame_buffer.clear();
         }
 
         // mode 2
@@ -134,9 +135,12 @@ namespace gameboy::ppu {
         check_status(counter_x, regs.ly);
     }
 
-    void Lcd::push_data(std::vector<std::uint8_t>&& pixels)
+    void Lcd::append(std::uint8_t color)
     {
-        frame_buffer = std::move(pixels);
+        frame_buffer.push_back(0xFF);  // A
+        frame_buffer.push_back(color); // B
+        frame_buffer.push_back(color); // G
+        frame_buffer.push_back(color); // R
     }
 
     std::uint8_t Lcd::read(int address) const

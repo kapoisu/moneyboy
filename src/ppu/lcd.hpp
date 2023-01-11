@@ -15,11 +15,6 @@ namespace gameboy::ppu {
         int y;
     };
 
-    struct Pixel {
-        Position pos;
-        std::uint8_t color;
-    };
-
     struct Registers {
         std::bitset<8> control;
         std::bitset<8> status{0b1000'0000};
@@ -57,7 +52,7 @@ namespace gameboy::ppu {
         std::uint8_t get_background_color(int index) const;
         Position get_window_position() const;
         void update(SDL_Renderer& renderer, SDL_Texture& texture);
-        void push_data(std::vector<std::uint8_t>&& pixels);
+        void append(std::uint8_t color);
 
         virtual std::uint8_t read(int address) const override;
         virtual void write(int address, std::uint8_t value) override;
