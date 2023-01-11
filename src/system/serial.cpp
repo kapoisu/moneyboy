@@ -69,7 +69,7 @@ namespace gameboy::system {
     {
         switch (address) {
             case sb:
-                return transfer_data;
+                return 0xFF; // Disable serial input.
             case sc:
                 return static_cast<std::uint8_t>(transfer_control.to_ulong());
             default:
