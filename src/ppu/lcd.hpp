@@ -41,9 +41,10 @@ namespace gameboy::ppu {
     public:
         Lcd(std::reference_wrapper<system::Interrupt> interrupt_ref);
         bool is_background_displayed() const;
-        int background_map_selection() const;
-        int data_region_selection() const;
         bool is_window_displayed() const;
+        int background_map_selection() const;
+        int window_map_selection() const;
+        int data_region_selection() const;
         bool is_enabled() const;
         Mode get_mode() const;
         std::uint8_t get_scroll_y() const;

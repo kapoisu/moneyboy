@@ -33,19 +33,24 @@ namespace gameboy::ppu {
         return regs.control.test(background_display);
     }
 
+    bool Lcd::is_window_displayed() const
+    {
+        return regs.control.test(window_display);
+    }
+
     int Lcd::background_map_selection() const
     {
         return regs.control.test(background_tile_map_select);
     }
 
+    int Lcd::window_map_selection() const
+    {
+        return regs.control.test(window_tile_map_select);
+    }
+
     int Lcd::data_region_selection() const
     {
         return regs.control.test(tile_data_select);
-    }
-
-    bool Lcd::is_window_displayed() const
-    {
-        return regs.control.test(window_display);
     }
 
     bool Lcd::is_enabled() const

@@ -3,6 +3,15 @@
 #include <iostream>
 
 namespace gameboy::ppu {
+    bool check_window(const Lcd& screen, Position current_position)
+    {
+        auto window_position{screen.get_window_position()};
+
+        return screen.is_window_displayed()
+            && window_position.y == current_position.y
+            && window_position.x <= current_position.x + 7;
+    }
+
     Core::Core(std::reference_wrapper<Vram> vram_ref, std::reference_wrapper<Oam> oam_ref)
         : vram{vram_ref}, oam{oam_ref}
     {
@@ -13,7 +22,7 @@ namespace gameboy::ppu {
         operation(this, screen);
     }
 
-    void Core::fetch_background(const Lcd& screen, int current_scanline)
+    void Core::fetch_background(const Lcd& screen, int current_scanline, bool is_window_active)
     {
         static int address{};
         static int tile_id{};
@@ -24,16 +33,25 @@ namespace gameboy::ppu {
         if (fetcher.counter_x >= 6) {
             auto x{fetcher.counter_x - 6};
             switch (x % 8) {
-                case 0: {
+                case 0:
+                    if (is_window_active) {
+                        auto tile_map_id{screen.window_map_selection()};
+                        address = TileIdIndex{}(tile_map_id, fetcher.window_line_counter, 0, x, 0);
+                    }
+                    else {
                         auto tile_map_id{screen.background_map_selection()};
                         auto scroll_y{screen.get_scroll_y()};
                         auto scroll_x{screen.get_scroll_x()};
                         address = TileIdIndex{}(tile_map_id, current_scanline, scroll_y, x, scroll_x);
-
-                        tile_id = vram.get().read(address);
                     }
+
+                    tile_id = vram.get().read(address);
                     break;
-                case 2: {
+                case 2:
+                    if (is_window_active) {
+                        address = TileDataIndex{}(tile_id, screen.data_region_selection(), fetcher.window_line_counter, 0);
+                    }
+                    else {
                         auto scroll_y{screen.get_scroll_y()};
                         address = TileDataIndex{}(tile_id, screen.data_region_selection(), current_scanline, scroll_y);
                     }
@@ -44,7 +62,15 @@ namespace gameboy::ppu {
                     high_byte = vram.get().read(address + 1);
                     break;
                 case 6: {
-                        auto discarded_pixels{(x < 8) ? (screen.get_scroll_x() % 8) : 0};
+                        auto discarded_pixels{0};
+                        if (is_window_active) {
+                            auto window_x{screen.get_window_position().x};
+                            discarded_pixels = (x < 8 && window_x < 7) ? (7 - window_x) : 0;
+                        }
+                        else {
+                            discarded_pixels = (x < 8) ? (screen.get_scroll_x() % 8) : 0;
+                        }
+
                         for (auto i{7 - discarded_pixels}; i >= 0; --i) {
                             auto color_id{(high_byte[i] << 1) | low_byte[i]};
                             background_queue.push({color_id});
@@ -71,11 +97,13 @@ namespace gameboy::ppu {
     {
         static int cycle{0};
         static int scanline_x{0};
+        static bool is_window_active{false};
 
         if (!screen.is_enabled()) {
             operation = idle;
             cycle = 0;
             scanline_x = 0;
+            is_window_active = false;
             fetcher = {};
             shifter = {};
             return;
@@ -112,13 +140,19 @@ namespace gameboy::ppu {
         if (current_scanline >= Lcd::scanlines_per_frame) {
             // v-blank
             if (current_scanline == Lcd::scanlines_per_frame && scanline_x == 0) {
+                fetcher.window_line_counter = 0;
             }
         }
         else if (scanline_x < oam_search_duration) {
             // oam search
         }
         else if (shifter.counter_x < Lcd::pixels_per_scanline) {
-            fetch_background(screen, current_scanline);
+            if (!is_window_active && check_window(screen, {shifter.counter_x, current_scanline})) {
+                is_window_active = true;
+                fetcher.counter_x = 0;
+            }
+
+            fetch_background(screen, current_scanline, is_window_active);
 
             if (!background_queue.empty()) {
                 auto color_id{0};
@@ -135,6 +169,11 @@ namespace gameboy::ppu {
 
         ++scanline_x;
         if (scanline_x == cycles_per_scanline) {
+            if (is_window_active) {
+                ++fetcher.window_line_counter;
+                is_window_active = false;
+            }
+
             scanline_x = 0;
             fetcher.counter_x = 0;
             shifter.counter_x = 0;

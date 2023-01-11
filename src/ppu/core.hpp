@@ -30,7 +30,7 @@ namespace gameboy::ppu {
         explicit Core(std::reference_wrapper<Vram> unique_vram, std::reference_wrapper<Oam> unique_oam);
         void tick(Lcd& screen);
     private:
-        void fetch_background(const Lcd& screen, int current_scanline);
+        void fetch_background(const Lcd& screen, int current_scanline, bool is_window_active);
         void idle(Lcd& screen);
         void work(Lcd& screen);
 
