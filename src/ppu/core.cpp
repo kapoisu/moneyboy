@@ -54,6 +54,19 @@ namespace gameboy::ppu {
 
     void Core::tick(Lcd& screen)
     {
+        operation(this, screen);
+    }
+
+    void Core::idle(Lcd& screen)
+    {
+        if (screen.is_enabled()) {
+            operation = work;
+            operation(this, screen);
+        }
+    }
+
+    void Core::work(Lcd& screen)
+    {
         constexpr int oam_search_duration{80};
         constexpr int pixel_transfer_duration{172};
         constexpr int cycles_per_scanline{456};
@@ -72,6 +85,7 @@ namespace gameboy::ppu {
         static std::bitset<8> high_byte{};
 
         if (!screen.is_enabled()) {
+            operation = idle;
             cycle = 0;
             scanline_x = 0;
             viewport_x = 0;
