@@ -3,6 +3,15 @@
 #include <stdexcept>
 
 namespace gameboy::io {
+    void dma_transfer(Bus& bus, std::uint8_t source)
+    {
+        auto source_address{source << 8};
+        constexpr auto dest_address{0xFE00};
+        for (auto i{0}; i < 160; ++i) {
+            bus.write_byte(dest_address + i, bus.read_byte(source_address + i));
+        }
+    }
+
     Bus::Bus(Bundle bundle) : peripherals{std::move(bundle)}
     {
         work_ram.resize(0xE000 - 0xC000);
@@ -97,6 +106,10 @@ namespace gameboy::io {
         }
         else if (address == 0xFF0F) {
             peripherals.interrupt.get().write(address, value);
+        }
+        else if (address == 0xFF46) {
+            peripherals.lcd.get().write(address, value);
+            dma_transfer(*this, value);
         }
         else if (address >= 0xFF40 && address < 0xFF4C) {
             peripherals.lcd.get().write(address, value);
