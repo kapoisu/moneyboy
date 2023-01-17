@@ -4,24 +4,25 @@
 #include <utility>
 
 namespace gameboy::ppu {
-    enum Control {
-        background_display = 0,
-        object_display = 1,
-        object_size = 2,
-        background_tile_map_select = 3,
-        tile_data_select = 4,
-        window_display = 5,
-        window_tile_map_select = 6,
-        lcd_display = 7
-    };
+    bool is_mode_0_interrupt_enabled(std::uint8_t status)
+    {
+        return ((status >> 3) & 1U) == 1;
+    }
 
-    enum Status {
-        coincidence_flag = 2,
-        mode_0_interrupt = 3,
-        mode_1_interrupt = 4,
-        mode_2_interrupt = 5,
-        coincidence_interrupt = 6
-    };
+    bool is_mode_1_interrupt_enabled(std::uint8_t status)
+    {
+        return ((status >> 4) & 1U) == 1;
+    }
+
+    bool is_mode_2_interrupt_enabled(std::uint8_t status)
+    {
+        return ((status >> 5) & 1U) == 1;
+    }
+
+    bool is_coincidence_interrupt_enabled(std::uint8_t status)
+    {
+        return ((status >> 6) & 1U) == 1;
+    }
 
     Lcd::Lcd(std::reference_wrapper<system::Interrupt> interrupt_ref) : interrupt{std::move(interrupt_ref)}
     {
@@ -30,42 +31,42 @@ namespace gameboy::ppu {
 
     bool Lcd::is_background_displayed() const
     {
-        return regs.control.test(background_display);
+        return ((regs.control >> 0) & 1U) == 1U;
     }
 
     bool Lcd::is_window_displayed() const
     {
-        return regs.control.test(window_display);
+        return ((regs.control >> 5) & 1U) == 1U;
     }
 
     bool Lcd::is_sprite_displayed() const
     {
-        return regs.control.test(object_display);
+        return ((regs.control >> 1) & 1U) == 1U;
     }
 
     int Lcd::background_map_selection() const
     {
-        return regs.control.test(background_tile_map_select);
+        return (regs.control >> 3) & 1U;
     }
 
     int Lcd::window_map_selection() const
     {
-        return regs.control.test(window_tile_map_select);
+        return (regs.control >> 6) & 1U;
     }
 
     int Lcd::data_region_selection() const
     {
-        return regs.control.test(tile_data_select);
+        return (regs.control >> 4) & 1U;
     }
 
     bool Lcd::is_enabled() const
     {
-        return regs.control.test(lcd_display);
+        return ((regs.control >> 7) & 1U) == 1;
     }
 
     Mode Lcd::get_mode() const
     {
-        return static_cast<Mode>(regs.status.to_ulong() % 4);
+        return static_cast<Mode>(regs.status % 4);
     }
 
     std::uint8_t Lcd::get_scroll_y() const
@@ -111,8 +112,8 @@ namespace gameboy::ppu {
 
     void Lcd::update(SDL_Renderer& renderer, SDL_Texture& texture)
     {
-        constexpr int x_modulus{114};
-        constexpr int ly_modulus{154};
+        static constexpr int x_modulus{114};
+        static constexpr int ly_modulus{154};
         static int counter_x{0};
 
         if (!is_enabled()) {
@@ -128,16 +129,16 @@ namespace gameboy::ppu {
             regs.ly = static_cast<std::uint8_t>((regs.ly + 1) % ly_modulus);
         }
 
-        regs.status.set(coincidence_flag, regs.ly == regs.ly_compare);
+        set_coincidence_flag(regs.ly == regs.ly_compare);
 
         // mode 0
         if (regs.ly < scanlines_per_frame && counter_x >= (20 + 53)) {
-            regs.status = (regs.status.to_ulong() & 0b1111'1100) + 0;
+            regs.status = (regs.status & 0b1111'1100) + 0;
         }
 
         // mode 1
         if (regs.ly == scanlines_per_frame && counter_x == 0) {
-            regs.status = (regs.status.to_ulong() & 0b1111'1100) + 1;
+            regs.status = (regs.status & 0b1111'1100) + 1;
             interrupt(system::Interrupt::vblank);
             ui::render<Lcd::pixels_per_scanline, Lcd::scanlines_per_frame>(renderer, texture, frame_buffer);
             frame_buffer.clear();
@@ -145,12 +146,12 @@ namespace gameboy::ppu {
 
         // mode 2
         if (regs.ly < scanlines_per_frame && counter_x == 0) {
-            regs.status = (regs.status.to_ulong() & 0b1111'1100) + 2;
+            regs.status = (regs.status & 0b1111'1100) + 2;
         }
 
         // mode 3
         if (regs.ly < scanlines_per_frame && counter_x == 20) {
-            regs.status = (regs.status.to_ulong() & 0b1111'1100) + 3;
+            regs.status = (regs.status & 0b1111'1100) + 3;
         }
 
         check_status(counter_x, regs.ly);
@@ -168,9 +169,9 @@ namespace gameboy::ppu {
     {
         switch (address) {
             case 0xFF40:
-                return static_cast<std::uint8_t>(regs.control.to_ulong());
+                return regs.control;
             case 0xFF41:
-                return static_cast<std::uint8_t>(regs.status.to_ulong());
+                return regs.status;
             case 0xFF42:
                 return regs.scroll_y;
             case 0xFF43:
@@ -242,12 +243,13 @@ namespace gameboy::ppu {
     void Lcd::check_status(int x, int y)
     {
         static bool signal{false};
+        Mode mode{get_mode()};
 
         bool new_signal{
-            ((regs.ly == regs.ly_compare && regs.status[coincidence_interrupt])) ||
-            ((regs.status.to_ulong() % 4 == 0) && regs.status[mode_0_interrupt]) ||
-            ((regs.status.to_ulong() % 4 == 1) && regs.status[mode_1_interrupt]) ||
-            ((regs.status.to_ulong() % 4 == 2) && regs.status[mode_2_interrupt])
+            ((regs.ly == regs.ly_compare) && is_coincidence_interrupt_enabled(regs.status)) ||
+            ((mode == Mode::h_blank) && is_mode_0_interrupt_enabled(regs.status)) ||
+            ((mode == Mode::v_blank) && is_mode_1_interrupt_enabled(regs.status)) ||
+            ((mode == Mode::oam_search) && is_mode_2_interrupt_enabled(regs.status))
         };
 
         if (new_signal && !signal) {
@@ -255,5 +257,10 @@ namespace gameboy::ppu {
         }
 
         signal = new_signal;
+    }
+
+    void Lcd::set_coincidence_flag(bool condition)
+    {
+        regs.status = static_cast<std::uint8_t>((regs.status & ~(1U << 2)) | ((regs.ly == regs.ly_compare) << 2));
     }
 }

@@ -1,9 +1,8 @@
 #ifndef PPU_LCD_H
 #define PPU_LCD_H
 
-#include <bitset>
 #include <cstdint>
-#include <memory>
+#include <functional>
 #include <vector>
 #include "io/port.hpp"
 #include "system/interrupt.hpp"
@@ -13,21 +12,6 @@ namespace gameboy::ppu {
     struct Position {
         int x;
         int y;
-    };
-
-    struct Registers {
-        std::bitset<8> control;
-        std::bitset<8> status{0b1000'0000};
-        std::uint8_t scroll_y;
-        std::uint8_t scroll_x;
-        std::uint8_t ly;
-        std::uint8_t ly_compare;
-        std::uint8_t dma_transfer{0b1111'1111};
-        std::uint8_t background_palette;
-        std::uint8_t object_palette_0;
-        std::uint8_t object_palette_1;
-        std::uint8_t window_y;
-        std::uint8_t window_x;
     };
 
     enum class Mode {
@@ -63,7 +47,23 @@ namespace gameboy::ppu {
         static constexpr int pixels_per_scanline{160};
         static constexpr int scanlines_per_frame{144};
     private:
+        struct Registers {
+            std::uint8_t control;
+            std::uint8_t status{0b1000'0000};
+            std::uint8_t scroll_y;
+            std::uint8_t scroll_x;
+            std::uint8_t ly;
+            std::uint8_t ly_compare;
+            std::uint8_t dma_transfer{0b1111'1111};
+            std::uint8_t background_palette;
+            std::uint8_t object_palette_0;
+            std::uint8_t object_palette_1;
+            std::uint8_t window_y;
+            std::uint8_t window_x;
+        };
+
         void check_status(int x, int y);
+        void set_coincidence_flag(bool condition);
 
         std::vector<std::uint8_t> frame_buffer{};
         Registers regs{};
