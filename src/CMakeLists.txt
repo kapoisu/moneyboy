@@ -24,7 +24,8 @@ target_sources(gameboy PRIVATE ppu/oam.cpp)
 target_sources(gameboy PRIVATE ppu/tile.cpp)
 target_sources(gameboy PRIVATE ppu/vram.cpp)
 
-target_sources(gameboy PRIVATE ui/window.cpp)
+target_sources(gameboy PRIVATE ui/display.cpp)
+target_sources(gameboy PRIVATE ui/wrapper.cpp)
 
 target_include_directories(gameboy PRIVATE ${CMAKE_SOURCE_DIR}/src)
 

@@ -11,10 +11,11 @@
 #include "system/joypad.hpp"
 #include "system/serial.hpp"
 #include "system/timer.hpp"
-#include "ui/window.hpp"
+#include "ui/display.hpp"
+#include "ui/wrapper.hpp"
 
 namespace gameboy {
-    class Emulator : private ui::Window {
+    class Emulator : private ui::SdlWrapper {
     public:
         explicit Emulator();
         void load_game();

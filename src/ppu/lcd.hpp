@@ -6,7 +6,7 @@
 #include <vector>
 #include "io/port.hpp"
 #include "system/interrupt.hpp"
-#include "ui/window.hpp"
+#include "ui/display.hpp"
 
 namespace gameboy::ppu {
     struct Position {

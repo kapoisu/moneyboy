@@ -1,4 +1,4 @@
-#include "window.hpp"
+#include "display.hpp"
 
 namespace gameboy::ui {
     WindowPtr create_window(std::string_view title, Width width, Height height)
