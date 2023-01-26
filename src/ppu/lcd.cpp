@@ -6,22 +6,22 @@
 namespace gameboy::ppu {
     bool is_mode_0_interrupt_enabled(std::uint8_t status)
     {
-        return ((status >> 3) & 1U) == 1;
+        return ((status >> 3) & 1U) == 1U;
     }
 
     bool is_mode_1_interrupt_enabled(std::uint8_t status)
     {
-        return ((status >> 4) & 1U) == 1;
+        return ((status >> 4) & 1U) == 1U;
     }
 
     bool is_mode_2_interrupt_enabled(std::uint8_t status)
     {
-        return ((status >> 5) & 1U) == 1;
+        return ((status >> 5) & 1U) == 1U;
     }
 
     bool is_coincidence_interrupt_enabled(std::uint8_t status)
     {
-        return ((status >> 6) & 1U) == 1;
+        return ((status >> 6) & 1U) == 1U;
     }
 
     Lcd::Lcd(std::reference_wrapper<system::Interrupt> interrupt_ref) : interrupt{std::move(interrupt_ref)}
@@ -46,22 +46,22 @@ namespace gameboy::ppu {
 
     int Lcd::background_map_selection() const
     {
-        return (regs.control >> 3) & 1U;
+        return (regs.control >> 3) % 2;
     }
 
     int Lcd::window_map_selection() const
     {
-        return (regs.control >> 6) & 1U;
+        return (regs.control >> 6) % 2;
     }
 
     int Lcd::data_region_selection() const
     {
-        return (regs.control >> 4) & 1U;
+        return (regs.control >> 4) % 2;
     }
 
     bool Lcd::is_enabled() const
     {
-        return ((regs.control >> 7) & 1U) == 1;
+        return ((regs.control >> 7) & 1U) == 1U;
     }
 
     Mode Lcd::get_mode() const
