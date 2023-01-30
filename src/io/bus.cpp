@@ -62,6 +62,9 @@ namespace gameboy::io {
         else if (address == 0xFF0F) {
             return peripherals.interrupt.get().read(address);
         }
+        else if (address >= 0xFF10 && address < 0xFF40) {
+            return peripherals.psg.get().read(address);
+        }
         else if (address >= 0xFF40 && address < 0xFF4C) {
             return peripherals.lcd.get().read(address);
         }
@@ -119,6 +122,9 @@ namespace gameboy::io {
         }
         else if (address == 0xFF0F) {
             peripherals.interrupt.get().write(address, value);
+        }
+        else if (address >= 0xFF10 && address < 0xFF40) {
+            peripherals.psg.get().write(address, value);
         }
         else if (address == 0xFF46) {
             peripherals.lcd.get().write(address, value);

@@ -2,6 +2,10 @@ add_executable(gameboy main.cpp)
 target_sources(gameboy PRIVATE boot_loader.cpp)
 target_sources(gameboy PRIVATE emulator.cpp)
 
+target_sources(gameboy PRIVATE apu/core.cpp)
+target_sources(gameboy PRIVATE apu/psg.cpp)
+target_sources(gameboy PRIVATE apu/timer.cpp)
+
 target_sources(gameboy PRIVATE cartridge/banking.cpp)
 target_sources(gameboy PRIVATE cartridge/mbc.cpp)
 target_sources(gameboy PRIVATE cartridge/storage.cpp)
@@ -25,6 +29,7 @@ target_sources(gameboy PRIVATE ppu/tile.cpp)
 target_sources(gameboy PRIVATE ppu/vram.cpp)
 
 target_sources(gameboy PRIVATE ui/display.cpp)
+target_sources(gameboy PRIVATE ui/sound.cpp)
 target_sources(gameboy PRIVATE ui/wrapper.cpp)
 
 target_include_directories(gameboy PRIVATE ${CMAKE_SOURCE_DIR}/src)

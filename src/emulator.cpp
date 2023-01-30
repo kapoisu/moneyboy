@@ -34,6 +34,7 @@ namespace gameboy {
         : p_game_window{ui::create_window("Money Boy", Width{480}, Height{432})}
         , p_game_renderer{ui::create_renderer(p_game_window, Scale{3.0}, Scale{3.0})}
         , p_game_texture{ui::create_texture(p_game_renderer, Width{160}, Height{144})}
+        , audio_device{SDL_AudioSpec{.freq{47662}, .format{AUDIO_F32SYS}, .channels{2}, .samples{4096}, .callback{nullptr}}}
     {
     }
 
@@ -51,6 +52,7 @@ namespace gameboy {
         p_joypad = std::make_unique<system::Joypad>(*p_interrupt);
         p_serial = std::make_unique<system::Serial>(*p_interrupt);
         p_timer = std::make_unique<system::Timer>(*p_interrupt);
+        p_psg = std::make_unique<apu::Psg>();
         p_lcd = std::make_unique<ppu::Lcd>(*p_interrupt);
         p_vram = std::make_unique<ppu::Vram>(*p_lcd);
         p_oam = std::make_unique<ppu::Oam>(*p_lcd);
@@ -63,10 +65,12 @@ namespace gameboy {
             .serial{*p_serial},
             .timer{*p_timer},
             .interrupt{*p_interrupt},
+            .psg{*p_psg},
             .lcd{*p_lcd}
         };
         auto p_address_bus{std::make_unique<io::Bus>(std::move(peripherals))};
 
+        p_apu = std::make_unique<apu::Core>(audio_device);
         p_cpu = std::make_unique<cpu::Core>(std::move(p_address_bus));
         p_ppu = std::make_unique<ppu::Core>(*p_vram, *p_oam);
     }
@@ -107,11 +111,21 @@ namespace gameboy {
                 p_serial->tick();
                 p_cpu->tick();
 
+                for (auto i{0}; i < 2; ++i) {
+                    p_apu->tick(*p_psg);
+                }
+
                 for (auto i{0}; i < 4; ++i) {
                     p_ppu->tick(*p_lcd);
                 }
 
                 p_lcd->update(*p_game_renderer, *p_game_texture);
+                p_psg->update();
+                p_psg->advance_sequencer(p_timer->get_divider());
+
+                for (auto i{0}; i < 4; ++i) {
+                    p_psg->advance_waveform();
+                }
             }
 
             cycle += 4;
