@@ -123,12 +123,6 @@ namespace gameboy::ppu {
             return;
         }
 
-        ++counter_x;
-        if (counter_x == x_modulus) {
-            counter_x = 0;
-            regs.ly = static_cast<std::uint8_t>((regs.ly + 1) % ly_modulus);
-        }
-
         set_coincidence_flag(regs.ly == regs.ly_compare);
 
         // mode 0
@@ -155,6 +149,11 @@ namespace gameboy::ppu {
         }
 
         check_status(counter_x, regs.ly);
+
+        counter_x = (counter_x + 1) % x_modulus;
+        if (counter_x == 0) {
+            regs.ly = static_cast<std::uint8_t>((regs.ly + 1) % ly_modulus);
+        }
     }
 
     void Lcd::append(std::uint8_t color)
