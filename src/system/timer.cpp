@@ -17,7 +17,7 @@ namespace gameboy::system {
 
     void Timer::tick()
     {
-        static const std::array<int, 4> clock{256, 4, 16, 64};
+        static constexpr std::array<int, 4> clock{256, 4, 16, 64};
         static bool signal{false};
         static bool is_overflowed{false};
 

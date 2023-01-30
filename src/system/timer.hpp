@@ -22,7 +22,7 @@ namespace gameboy::system {
         std::uint8_t timer_modulus{};
 
         /*
-            bit 2  : Timer Stop  (0=Stop, 1=Start)
+            bit 2:   Timer Stop  (0=Stop, 1=Start)
             bit 1-0: Input Clock Select
                 00:   4096 Hz
                 01: 262144 Hz
